@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "Discord Summarizer",
+  "version": "1.0.0",
+  "description": "Summarize unread Discord messages using Google Gemini-2.0 Flash",
+  "icons": {
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "images/icon16.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
+    },
+    "default_title": "Discord Summarizer"
+  },
+  "background": {
+    "service_worker": "js/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.discord.com/*"],
+      "js": ["js/env.js", "js/content.js"],
+      "css": ["css/styles.css"]
+    }
+  ],
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "*://*.discord.com/*"
+  ]
+}

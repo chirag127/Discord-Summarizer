@@ -1,0 +1,18 @@
+{
+  "name": "discord-summarizer",
+  "version": "1.0.0",
+  "description": "Chrome extension to summarize unread Discord messages using Google Gemini-2.0 Flash",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start:backend": "cd backend && npm start"
+  },
+  "keywords": [
+    "discord",
+    "summarizer",
+    "chrome-extension",
+    "gemini"
+  ],
+  "author": "",
+  "license": "MIT"
+}

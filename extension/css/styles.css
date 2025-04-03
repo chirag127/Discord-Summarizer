@@ -1,0 +1,257 @@
+/* Discord Summarizer Styles */
+
+/* Button container */
+.discord-summarizer-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 0 16px;
+}
+
+/* Summarize button */
+.discord-summarizer-btn {
+    background-color: #5865f2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-right: 8px;
+}
+
+.discord-summarizer-btn:hover {
+    background-color: #4752c4;
+}
+
+.discord-summarizer-btn:disabled {
+    background-color: #72767d;
+    cursor: not-allowed;
+}
+
+/* History button */
+.discord-summarizer-history-btn {
+    background-color: #4f545c;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-left: 8px;
+}
+
+.discord-summarizer-history-btn:hover {
+    background-color: #36393f;
+}
+
+.discord-summarizer-history-btn:disabled {
+    background-color: #72767d;
+    cursor: not-allowed;
+}
+
+/* Mode selector */
+.discord-summarizer-mode {
+    background-color: #2f3136;
+    color: white;
+    border: 1px solid #202225;
+    border-radius: 4px;
+    padding: 7px 12px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.discord-summarizer-mode:focus {
+    outline: none;
+    border-color: #5865f2;
+}
+
+/* Summary container */
+.discord-summarizer-summary {
+    background-color: #2f3136;
+    border-radius: 8px;
+    margin: 16px;
+    overflow: hidden;
+    border-left: 4px solid #5865f2;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Summary header */
+.discord-summarizer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background-color: #202225;
+}
+
+.discord-summarizer-header h3 {
+    margin: 0;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.discord-summarizer-close {
+    background: none;
+    border: none;
+    color: #b9bbbe;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.discord-summarizer-close:hover {
+    color: white;
+}
+
+/* Summary content */
+.discord-summarizer-content {
+    padding: 16px;
+    color: #dcddde;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.discord-summarizer-content ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.discord-summarizer-content p {
+    margin: 0 0 8px 0;
+}
+
+.discord-summarizer-content p:last-child {
+    margin-bottom: 0;
+}
+
+/* Summary history container */
+.discord-summarizer-history {
+    background-color: #2f3136;
+    border-radius: 8px;
+    margin: 16px;
+    overflow: hidden;
+    border-left: 4px solid #4f545c;
+    animation: fadeIn 0.3s ease-in-out;
+    max-width: 600px;
+}
+
+/* History content */
+.discord-summarizer-history-content {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+/* History item */
+.discord-summarizer-history-item {
+    background-color: #36393f;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    overflow: hidden;
+}
+
+.discord-summarizer-history-item:last-child {
+    margin-bottom: 0;
+}
+
+/* History item header */
+.discord-summarizer-history-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: #2f3136;
+    cursor: pointer;
+}
+
+/* History item info */
+.discord-summarizer-history-item-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.discord-summarizer-history-date {
+    font-size: 12px;
+    color: #b9bbbe;
+}
+
+.discord-summarizer-history-mode {
+    font-size: 14px;
+    color: white;
+    font-weight: 500;
+}
+
+/* History toggle button */
+.discord-summarizer-history-toggle {
+    background: none;
+    border: none;
+    color: #b9bbbe;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.discord-summarizer-history-toggle:hover {
+    color: white;
+}
+
+/* History item content */
+.discord-summarizer-history-item-content {
+    padding: 12px;
+    color: #dcddde;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Notification */
+.discord-summarizer-notification {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background-color: #36393f;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+    animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s forwards;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
