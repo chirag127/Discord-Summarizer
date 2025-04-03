@@ -11,15 +11,71 @@ function getDiscordUserId() {
             // The token is a JWT, we can extract the user ID from it
             const tokenParts = localStorageData.split(".");
             if (tokenParts.length === 3) {
-                const payload = JSON.parse(atob(tokenParts[1]));
-                return payload.user_id || null;
+                try {
+                    // Decode the base64 payload
+                    const base64Payload = tokenParts[1];
+                    // Make sure the base64 string is properly padded
+                    const paddedBase64 = base64Payload.padEnd(
+                        base64Payload.length +
+                            ((4 - (base64Payload.length % 4)) % 4),
+                        "="
+                    );
+
+                    // Replace non-URL safe characters
+                    const urlSafeBase64 = paddedBase64
+                        .replace(/-/g, "+")
+                        .replace(/_/g, "/");
+
+                    // Decode and parse
+                    const decodedPayload = atob(urlSafeBase64);
+
+                    // Check if the decoded payload is valid before parsing
+                    if (
+                        decodedPayload &&
+                        decodedPayload.trim().startsWith("{")
+                    ) {
+                        const payload = JSON.parse(decodedPayload);
+                        if (payload && payload.user_id) {
+                            return payload.user_id;
+                        }
+                    }
+                } catch (decodeError) {
+                    console.error("Error decoding token payload:", decodeError);
+                }
+            }
+
+            // Fallback: Try to get user ID from other Discord sources
+            // This is a backup in case the token parsing fails
+            try {
+                // Look for user ID in the Discord API endpoint cache
+                const userCache = localStorage.getItem("user_id_cache");
+                if (userCache) {
+                    return JSON.parse(userCache);
+                }
+
+                // Try to find it in the window.__DISCORD_STORE__ if available
+                if (window.__DISCORD_STORE__ && window.__DISCORD_STORE__.user) {
+                    return window.__DISCORD_STORE__.user.id;
+                }
+            } catch (fallbackError) {
+                console.error("Error in user ID fallback:", fallbackError);
             }
         }
     } catch (error) {
         console.error("Error getting Discord user ID:", error);
     }
 
-    return null;
+    // If we can't get the user ID, generate a temporary one
+    // This allows the extension to work even without a user ID
+    const tempId = localStorage.getItem("discord_summarizer_temp_id");
+    if (tempId) {
+        return tempId;
+    }
+
+    // Generate a random ID if we don't have one yet
+    const randomId = "temp_" + Math.random().toString(36).substring(2, 15);
+    localStorage.setItem("discord_summarizer_temp_id", randomId);
+    return randomId;
 }
 
 // Get Discord server and channel IDs from the URL
@@ -127,7 +183,9 @@ function addSummarizeButton() {
     // Look for the Discord chat input area
     const chatInput = document.querySelector('[class*="channelTextArea"]');
     // Check for the unread messages divider
-    const unreadDivider = document.querySelector('div[class*="divider"][class*="isUnread"]');
+    const unreadDivider = document.querySelector(
+        'div[class*="divider"][class*="isUnread"]'
+    );
     // Check if button already exists
     const existingButton = document.getElementById("discord-summarizer-btn");
 
@@ -160,7 +218,9 @@ function addSummarizeButton() {
 
 // Remove the summarize button from Discord UI
 function removeSummarizeButton() {
-    const buttonContainer = document.getElementById("discord-summarizer-container");
+    const buttonContainer = document.getElementById(
+        "discord-summarizer-container"
+    );
     if (buttonContainer) {
         console.log("Removing Summarize button (no unread messages).");
         buttonContainer.remove();
@@ -599,45 +659,65 @@ function observeDiscordNavigation() {
 
         // Check mutations for changes that might affect the unread divider
         for (const mutation of mutations) {
-            if (mutation.type === 'childList') {
+            if (mutation.type === "childList") {
                 // Check added nodes for the divider or message list changes
-                mutation.addedNodes.forEach(node => {
+                mutation.addedNodes.forEach((node) => {
                     if (node.nodeType === Node.ELEMENT_NODE) {
                         // Check if the node itself or its descendants match the unread divider or a relevant container
-                        if (node.matches && (node.matches('div[class*="divider"][class*="isUnread"]') || node.querySelector('div[class*="divider"][class*="isUnread"]') || node.matches('[class*="scrollerInner"]') || node.matches('[class*="messagesWrapper"]'))) {
+                        if (
+                            node.matches &&
+                            (node.matches(
+                                'div[class*="divider"][class*="isUnread"]'
+                            ) ||
+                                node.querySelector(
+                                    'div[class*="divider"][class*="isUnread"]'
+                                ) ||
+                                node.matches('[class*="scrollerInner"]') ||
+                                node.matches('[class*="messagesWrapper"]'))
+                        ) {
                             unreadStatusPotentiallyChanged = true;
                         }
                     }
                 });
                 // Check removed nodes for the divider
-                mutation.removedNodes.forEach(node => {
-                     if (node.nodeType === Node.ELEMENT_NODE) {
-                        if (node.matches && node.matches('div[class*="divider"][class*="isUnread"]')) {
+                mutation.removedNodes.forEach((node) => {
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        if (
+                            node.matches &&
+                            node.matches(
+                                'div[class*="divider"][class*="isUnread"]'
+                            )
+                        ) {
                             unreadStatusPotentiallyChanged = true;
                         }
                     }
                 });
             }
-             // Also consider attribute changes on the divider itself if its class changes
-             if (mutation.type === 'attributes' && mutation.target.matches && mutation.target.matches('div[class*="divider"]')) {
-                 unreadStatusPotentiallyChanged = true;
-             }
+            // Also consider attribute changes on the divider itself if its class changes
+            if (
+                mutation.type === "attributes" &&
+                mutation.target.matches &&
+                mutation.target.matches('div[class*="divider"]')
+            ) {
+                unreadStatusPotentiallyChanged = true;
+            }
 
             if (unreadStatusPotentiallyChanged) break; // No need to check further mutations if we already know
         }
 
-
         // If potential change detected, check current state and update button
         if (unreadStatusPotentiallyChanged) {
-             // Use a small timeout to debounce checks and wait for DOM to settle
-             setTimeout(() => {
-                const unreadDivider = document.querySelector('div[class*="divider"][class*="isUnread"]');
+            // Use a small timeout to debounce checks and wait for DOM to settle
+            setTimeout(() => {
+                const unreadDivider = document.querySelector(
+                    'div[class*="divider"][class*="isUnread"]'
+                );
                 if (unreadDivider) {
                     addSummarizeButton(); // Will only add if not already present
                 } else {
                     removeSummarizeButton(); // Will only remove if present
                 }
-             }, 150); // Slightly increased delay for stability
+            }, 150); // Slightly increased delay for stability
         }
     });
 
@@ -648,6 +728,6 @@ function observeDiscordNavigation() {
         childList: true,
         subtree: true,
         attributes: true, // Observe attribute changes (like class changes on the divider)
-        attributeFilter: ['class'] // Only watch class attribute changes
+        attributeFilter: ["class"], // Only watch class attribute changes
     });
 }
