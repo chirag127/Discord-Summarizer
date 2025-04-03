@@ -1,9 +1,21 @@
 // Content script for Discord Summarizer extension
 
-// Wait for the page to fully load
-document.addEventListener("DOMContentLoaded", () => {
-    // Initialize the extension
-    initDiscordSummarizer();
+// Initialize the extension immediately and also when the page is fully loaded
+initDiscordSummarizer();
+
+// Also listen for DOMContentLoaded in case the script runs before the page is ready
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+        initDiscordSummarizer();
+    });
+}
+
+// Listen for messages from the popup
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === "summarizeFromPopup") {
+        handleSummarizeFromPopup(sendResponse);
+        return true; // Required for async sendResponse
+    }
 });
 
 // Main initialization function
@@ -355,6 +367,39 @@ function showNotification(message) {
     setTimeout(() => {
         notification.remove();
     }, 3000);
+}
+
+// Handle summarize request from popup
+async function handleSummarizeFromPopup(sendResponse) {
+    try {
+        // Check if we're on Discord
+        if (!window.location.href.includes("discord.com")) {
+            sendResponse({ success: false, error: "Not on Discord" });
+            return;
+        }
+
+        // Get unread messages
+        const messages = getUnreadMessages();
+
+        if (messages.length === 0) {
+            sendResponse({ success: false, error: "No unread messages found" });
+            return;
+        }
+
+        // Get summary preferences
+        const preferences = await getSummaryPreferences();
+
+        // Send to backend for summarization
+        const summary = await getSummary(messages, preferences);
+
+        // Display the summary
+        displaySummary(summary, preferences);
+
+        sendResponse({ success: true });
+    } catch (error) {
+        console.error("Error handling popup request:", error);
+        sendResponse({ success: false, error: error.message });
+    }
 }
 
 // Observe Discord navigation changes

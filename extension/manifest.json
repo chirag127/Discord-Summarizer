@@ -14,21 +14,30 @@
       "48": "images/icon48.png",
       "128": "images/icon128.png"
     },
-    "default_title": "Discord Summarizer"
+    "default_title": "Discord Summarizer",
+    "default_popup": "popup.html"
   },
   "background": {
     "service_worker": "js/background.js"
   },
   "content_scripts": [
     {
-      "matches": ["*://*.discord.com/*"],
-      "js": ["js/env.js", "js/content.js"],
-      "css": ["css/styles.css"]
+      "matches": [
+        "*://*.discord.com/*"
+      ],
+      "js": [
+        "js/env.js",
+        "js/content.js"
+      ],
+      "css": [
+        "css/styles.css"
+      ]
     }
   ],
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "tabs"
   ],
   "host_permissions": [
     "*://*.discord.com/*"
