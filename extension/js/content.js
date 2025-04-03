@@ -268,6 +268,70 @@ async function handleSummarizeClick() {
     }
 }
 
+// Handle history button click
+async function handleHistoryClick() {
+    try {
+        console.log("History button clicked");
+
+        // Show loading state
+        const historyBtn = document.getElementById(
+            "discord-summarizer-history-btn"
+        );
+        const originalText = historyBtn.innerHTML;
+        historyBtn.innerHTML = "<span>Loading...</span>";
+        historyBtn.disabled = true;
+
+        // Get user ID
+        const userId = getDiscordUserId();
+        console.log("User ID for history:", userId);
+
+        if (!userId) {
+            showNotification("Unable to identify user. Please try again.");
+            historyBtn.innerHTML = originalText;
+            historyBtn.disabled = false;
+            return;
+        }
+
+        try {
+            // Get summaries from backend
+            const summaries = await getSummaryHistory(userId);
+            console.log("Summaries retrieved:", summaries.length);
+
+            if (summaries.length === 0) {
+                showNotification("No summary history found");
+                historyBtn.innerHTML = originalText;
+                historyBtn.disabled = false;
+                return;
+            }
+
+            // Display the summaries
+            displaySummaryHistory(summaries);
+
+            // Reset button
+            historyBtn.innerHTML = originalText;
+            historyBtn.disabled = false;
+        } catch (historyError) {
+            console.error("Error getting summary history:", historyError);
+            showNotification(
+                "Error: " +
+                    (historyError.message || "Failed to get summary history")
+            );
+            historyBtn.innerHTML = originalText;
+            historyBtn.disabled = false;
+        }
+    } catch (error) {
+        console.error("Error fetching summary history:", error);
+        showNotification("Error fetching summary history");
+
+        // Reset button
+        const historyBtn = document.getElementById(
+            "discord-summarizer-history-btn"
+        );
+        historyBtn.innerHTML = "<span>History</span>";
+        historyBtn.disabled = false;
+    }
+}
+
 // Get unread messages from Discord
 function getUnreadMessages() {
     const messages = [];
@@ -418,7 +482,24 @@ async function getSummary(messages, preferences) {
         const userId = getDiscordUserId();
         const { serverId, channelId } = getDiscordIds();
 
-        const response = await fetch(`${CONFIG.API_URL}/summarize`, {
+        // Debug information
+        console.log(
+            "Sending request to:",
+            CONFIG ? CONFIG.API_URL : "CONFIG not defined"
+        );
+        console.log("Messages:", messages);
+        console.log("Preferences:", preferences);
+
+        // Check if CONFIG is defined
+        if (!CONFIG || !CONFIG.API_URL) {
+            console.error("CONFIG or CONFIG.API_URL is not defined");
+            // Fallback to localhost if CONFIG is not defined
+            var apiUrl = "http://localhost:3000";
+        } else {
+            var apiUrl = CONFIG.API_URL;
+        }
+
+        const response = await fetch(`${apiUrl}/summarize`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -438,6 +519,7 @@ async function getSummary(messages, preferences) {
         }
 
         const data = await response.json();
+        console.log("API response:", data);
 
         // Store the summaryId in the response for potential future use
         const result = {
@@ -448,6 +530,45 @@ async function getSummary(messages, preferences) {
         return result.summary;
     } catch (error) {
         console.error("Error getting summary:", error);
+        showNotification("Error: " + error.message);
+        throw error;
+    }
+}
+
+// Get summary history from backend
+async function getSummaryHistory(userId) {
+    try {
+        // Check if CONFIG is defined
+        if (!CONFIG || !CONFIG.API_URL) {
+            console.error("CONFIG or CONFIG.API_URL is not defined");
+            // Fallback to localhost if CONFIG is not defined
+            var apiUrl = "http://localhost:3000";
+        } else {
+            var apiUrl = CONFIG.API_URL;
+        }
+
+        console.log(
+            "Fetching summary history from:",
+            `${apiUrl}/summaries/${userId}`
+        );
+
+        const response = await fetch(`${apiUrl}/summaries/${userId}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("History API response:", data);
+
+        return data.summaries || [];
+    } catch (error) {
+        console.error("Error getting summary history:", error);
         throw error;
     }
 }
@@ -515,6 +636,102 @@ function displaySummary(summary, preferences, options = {}) {
     }
 }
 
+// Display summary history in Discord
+function displaySummaryHistory(summaries) {
+    // Create history container
+    const historyContainer = document.createElement("div");
+    historyContainer.className = "discord-summarizer-history";
+
+    // Create header
+    const header = document.createElement("div");
+    header.className = "discord-summarizer-header";
+
+    const title = document.createElement("h3");
+    title.textContent = "Summary History";
+    header.appendChild(title);
+
+    const closeBtn = document.createElement("button");
+    closeBtn.className = "discord-summarizer-close";
+    closeBtn.innerHTML = "×";
+    closeBtn.addEventListener("click", () => {
+        historyContainer.remove();
+    });
+    header.appendChild(closeBtn);
+
+    historyContainer.appendChild(header);
+
+    // Create content
+    const content = document.createElement("div");
+    content.className = "discord-summarizer-history-content";
+
+    // Add each summary
+    summaries.forEach((summary) => {
+        const summaryItem = document.createElement("div");
+        summaryItem.className = "discord-summarizer-history-item";
+
+        // Create summary header
+        const summaryHeader = document.createElement("div");
+        summaryHeader.className = "discord-summarizer-history-item-header";
+
+        // Format date
+        const date = new Date(summary.createdAt);
+        const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+
+        // Add summary info
+        const summaryInfo = document.createElement("div");
+        summaryInfo.className = "discord-summarizer-history-item-info";
+        summaryInfo.innerHTML = `
+            <span class="discord-summarizer-history-date">${formattedDate}</span>
+            <span class="discord-summarizer-history-mode">${summary.mode.replace(
+                "_",
+                " "
+            )}</span>
+        `;
+        summaryHeader.appendChild(summaryInfo);
+
+        // Add expand/collapse button
+        const toggleBtn = document.createElement("button");
+        toggleBtn.className = "discord-summarizer-history-toggle";
+        toggleBtn.innerHTML = "+";
+        toggleBtn.addEventListener("click", () => {
+            // Toggle content visibility
+            const content = summaryItem.querySelector(
+                ".discord-summarizer-history-item-content"
+            );
+            const isVisible = content.style.display !== "none";
+            content.style.display = isVisible ? "none" : "block";
+            toggleBtn.innerHTML = isVisible ? "+" : "-";
+        });
+        summaryHeader.appendChild(toggleBtn);
+
+        summaryItem.appendChild(summaryHeader);
+
+        // Create summary content
+        const summaryContent = document.createElement("div");
+        summaryContent.className = "discord-summarizer-history-item-content";
+        summaryContent.innerHTML = summary.summary;
+        summaryContent.style.display = "none"; // Hidden by default
+        summaryItem.appendChild(summaryContent);
+
+        content.appendChild(summaryItem);
+    });
+
+    historyContainer.appendChild(content);
+
+    // Find the messages container
+    const messagesContainer = document.querySelector(
+        '[class*="messagesWrapper"]'
+    );
+
+    if (messagesContainer) {
+        // Insert at the bottom
+        messagesContainer.appendChild(historyContainer);
+
+        // Scroll to the history
+        historyContainer.scrollIntoView({ behavior: "smooth" });
+    }
+}
+
 // Show notification
 function showNotification(message) {
     const notification = document.createElement("div");
@@ -532,9 +749,13 @@ function showNotification(message) {
 // Handle summarize request from popup
 async function handleSummarizeFromPopup(sendResponse, options = {}) {
     try {
+        console.log("Handling popup request with options:", options);
+
         // Check if we're on Discord
         if (!window.location.href.includes("discord.com")) {
+            console.error("Not on Discord website");
             sendResponse({ success: false, error: "Not on Discord" });
+            showNotification("Error: Not on Discord website");
             return;
         }
 
@@ -543,44 +764,71 @@ async function handleSummarizeFromPopup(sendResponse, options = {}) {
         const messageSelection = options.messageSelection || "unread";
         const messageCount = options.messageCount || 20;
 
+        console.log("Message selection:", messageSelection);
+        console.log("Message count:", messageCount);
+
         if (messageSelection === "unread") {
             messages = getUnreadMessages();
+            console.log("Unread messages found:", messages.length);
             if (messages.length === 0) {
                 sendResponse({
                     success: false,
                     error: "No unread messages found",
                 });
+                showNotification("No unread messages found");
                 return;
             }
         } else if (messageSelection === "recent") {
             messages = getRecentMessages(messageCount);
+            console.log("Recent messages found:", messages.length);
             if (messages.length === 0) {
                 sendResponse({
                     success: false,
                     error: "No messages found in this channel",
                 });
+                showNotification("No messages found in this channel");
                 return;
             }
         }
 
         // Get summary preferences
         const preferences = await getSummaryPreferences();
+        console.log("Summary preferences:", preferences);
 
-        // Send to backend for summarization
-        const summary = await getSummary(messages, preferences);
+        try {
+            // Send to backend for summarization
+            const summary = await getSummary(messages, preferences);
+            console.log(
+                "Summary received:",
+                summary ? summary.substring(0, 50) + "..." : "No summary"
+            );
 
-        // Display the summary
-        displaySummary(summary, preferences, {
-            title:
-                messageSelection === "unread"
-                    ? "Unread Messages Summary"
-                    : `Last ${messageCount} Messages Summary`,
-        });
+            // Display the summary
+            displaySummary(summary, preferences, {
+                title:
+                    messageSelection === "unread"
+                        ? "Unread Messages Summary"
+                        : `Last ${messageCount} Messages Summary`,
+            });
 
-        sendResponse({ success: true });
+            sendResponse({ success: true });
+        } catch (summaryError) {
+            console.error("Error getting summary:", summaryError);
+            sendResponse({
+                success: false,
+                error: summaryError.message || "Error getting summary",
+            });
+            showNotification(
+                "Error: " + (summaryError.message || "Failed to get summary")
+            );
+        }
     } catch (error) {
         console.error("Error handling popup request:", error);
-        sendResponse({ success: false, error: error.message });
+        sendResponse({
+            success: false,
+            error: error.message || "Unknown error",
+        });
+        showNotification("Error: " + (error.message || "Unknown error"));
     }
 }
 

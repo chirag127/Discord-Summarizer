@@ -13,8 +13,16 @@ const {
 // Load environment variables
 dotenv.config();
 
+// Debug environment variables
+console.log("MONGODB_URI:", process.env.MONGODB_URI);
+console.log("GEMINI_API_KEY:", process.env.GEMINI_API_KEY);
+
 // Connect to MongoDB
-connectDB();
+try {
+    connectDB();
+} catch (error) {
+    console.error("Error connecting to MongoDB:", error);
+}
 
 // Initialize Express app
 const app = express();

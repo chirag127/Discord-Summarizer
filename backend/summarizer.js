@@ -1,7 +1,7 @@
 const {
-  GoogleGenerativeAI,
-  HarmCategory,
-  HarmBlockThreshold,
+    GoogleGenerativeAI,
+    HarmCategory,
+    HarmBlockThreshold,
 } = require("@google/generative-ai");
 
 // Initialize Google Generative AI
@@ -10,16 +10,16 @@ const genAI = new GoogleGenerativeAI(apiKey);
 
 // Get the model
 const model = genAI.getGenerativeModel({
-  model: "gemini-2.0-flash",
+    model: "gemini-2.0-flash",
 });
 
 // Generation config
 const generationConfig = {
-  temperature: 0.7,
-  topP: 0.95,
-  topK: 40,
-  maxOutputTokens: 4096,
-  responseMimeType: "text/plain",
+    temperature: 0.7,
+    topP: 0.95,
+    topK: 40,
+    maxOutputTokens: 4096,
+    responseMimeType: "text/plain",
 };
 
 /**
@@ -29,32 +29,57 @@ const generationConfig = {
  * @param {string} style - Summary style (bullets, paragraphs)
  * @returns {Promise<string>} HTML-formatted summary
  */
-async function summarizeMessages(messages, mode = 'brief', style = 'bullets') {
-  try {
-    // Format messages for the prompt
-    const formattedMessages = messages.map(msg => 
-      `${msg.author}: ${msg.text}`
-    ).join('\n');
-    
+async function summarizeMessages(messages, mode = "brief", style = "bullets") {
+    try {
+        // Format messages for the prompt
+        const formattedMessages = messages
+            .map((msg) => `${msg.author}: ${msg.text}`)
+            .join("\n");
+
+        console.log("Messages to summarize:", formattedMessages);
+        console.log("Mode:", mode);
+        console.log("Style:", style);
+
+        // For testing purposes, return a mock summary
+        let mockSummary;
+
+        if (mode === "brief") {
+            mockSummary =
+                "• This is a brief summary of the conversation\n• It highlights the main points\n• Perfect for quick updates";
+        } else if (mode === "detailed") {
+            mockSummary =
+                "• This is a detailed summary of the conversation\n• It includes more information and context\n• It covers all the important points discussed\n• Great for when you need all the details";
+        } else if (mode === "key_takeaways") {
+            mockSummary =
+                "• Key point 1: Important information\n• Key point 2: Action items\n• Key point 3: Decisions made";
+        } else {
+            mockSummary = "• Summary of the conversation";
+        }
+
+        // Format the summary based on style
+        return formatSummary(mockSummary, style);
+
+        /* Commented out for testing
     // Create prompt based on mode and style
     const prompt = createPrompt(formattedMessages, mode, style);
-    
+
     // Start chat session
     const chatSession = model.startChat({
       generationConfig,
       history: [],
     });
-    
+
     // Send message to Gemini
     const result = await chatSession.sendMessage(prompt);
     const summary = result.response.text();
-    
+
     // Format the summary based on style
     return formatSummary(summary, style);
-  } catch (error) {
-    console.error('Error in summarizeMessages:', error);
-    throw error;
-  }
+    */
+    } catch (error) {
+        console.error("Error in summarizeMessages:", error);
+        throw error;
+    }
 }
 
 /**
@@ -65,34 +90,38 @@ async function summarizeMessages(messages, mode = 'brief', style = 'bullets') {
  * @returns {string} Prompt for Gemini
  */
 function createPrompt(messages, mode, style) {
-  let prompt = `Summarize the following Discord conversation:\n\n${messages}\n\n`;
-  
-  // Add mode-specific instructions
-  switch (mode) {
-    case 'brief':
-      prompt += 'Provide a brief summary that captures the main points of the conversation. ';
-      prompt += 'Keep it concise and to the point. ';
-      break;
-    case 'detailed':
-      prompt += 'Provide a detailed summary of the conversation, including all important points discussed. ';
-      prompt += 'Make sure to capture the flow of the conversation and any decisions or conclusions reached. ';
-      break;
-    case 'key_takeaways':
-      prompt += 'Extract the key takeaways from this conversation. ';
-      prompt += 'Focus on actionable items, decisions made, and important information shared. ';
-      break;
-    default:
-      prompt += 'Provide a concise summary of the main points. ';
-  }
-  
-  // Add style-specific instructions
-  if (style === 'bullets') {
-    prompt += 'Format the summary as bullet points.';
-  } else {
-    prompt += 'Format the summary as paragraphs.';
-  }
-  
-  return prompt;
+    let prompt = `Summarize the following Discord conversation:\n\n${messages}\n\n`;
+
+    // Add mode-specific instructions
+    switch (mode) {
+        case "brief":
+            prompt +=
+                "Provide a brief summary that captures the main points of the conversation. ";
+            prompt += "Keep it concise and to the point. ";
+            break;
+        case "detailed":
+            prompt +=
+                "Provide a detailed summary of the conversation, including all important points discussed. ";
+            prompt +=
+                "Make sure to capture the flow of the conversation and any decisions or conclusions reached. ";
+            break;
+        case "key_takeaways":
+            prompt += "Extract the key takeaways from this conversation. ";
+            prompt +=
+                "Focus on actionable items, decisions made, and important information shared. ";
+            break;
+        default:
+            prompt += "Provide a concise summary of the main points. ";
+    }
+
+    // Add style-specific instructions
+    if (style === "bullets") {
+        prompt += "Format the summary as bullet points.";
+    } else {
+        prompt += "Format the summary as paragraphs.";
+    }
+
+    return prompt;
 }
 
 /**
@@ -102,19 +131,25 @@ function createPrompt(messages, mode, style) {
  * @returns {string} HTML-formatted summary
  */
 function formatSummary(summary, style) {
-  if (style === 'bullets') {
-    // If summary doesn't already have bullet points, add them
-    if (!summary.includes('•') && !summary.includes('-') && !summary.includes('*')) {
-      // Split by newlines and add bullets
-      const lines = summary.split('\n').filter(line => line.trim() !== '');
-      return lines.map(line => `• ${line}`).join('<br>');
+    if (style === "bullets") {
+        // If summary doesn't already have bullet points, add them
+        if (
+            !summary.includes("•") &&
+            !summary.includes("-") &&
+            !summary.includes("*")
+        ) {
+            // Split by newlines and add bullets
+            const lines = summary
+                .split("\n")
+                .filter((line) => line.trim() !== "");
+            return lines.map((line) => `• ${line}`).join("<br>");
+        }
     }
-  }
-  
-  // Replace newlines with <br> for HTML display
-  return summary.replace(/\n/g, '<br>');
+
+    // Replace newlines with <br> for HTML display
+    return summary.replace(/\n/g, "<br>");
 }
 
 module.exports = {
-  summarizeMessages
+    summarizeMessages,
 };
