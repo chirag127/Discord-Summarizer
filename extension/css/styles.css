@@ -151,12 +151,44 @@
     color: white;
 }
 
+/* Copy button */
+.discord-summarizer-copy-btn {
+    background: none;
+    border: 1px solid #4f545c;
+    color: #b9bbbe;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 4px 8px;
+    margin-right: 8px;
+    border-radius: 3px;
+    transition: all 0.2s;
+}
+
+.discord-summarizer-copy-btn:hover {
+    background-color: #4f545c;
+    color: white;
+}
+
 /* Summary content */
 .discord-summarizer-content {
     padding: 16px;
     color: #dcddde;
     font-size: 14px;
     line-height: 1.5;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    cursor: text !important;
+}
+
+/* Ensure all child elements are also selectable */
+.discord-summarizer-content * {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    cursor: text !important;
 }
 
 .discord-summarizer-content ul {
@@ -238,10 +270,18 @@
     cursor: pointer;
     padding: 0 4px;
     line-height: 1;
+    margin-left: 8px;
 }
 
 .discord-summarizer-history-toggle:hover {
     color: white;
+}
+
+/* Adjust copy button in history items */
+.discord-summarizer-history-item .discord-summarizer-copy-btn {
+    font-size: 11px;
+    padding: 3px 6px;
+    margin-right: 4px;
 }
 
 /* History item content */
@@ -250,6 +290,20 @@
     color: #dcddde;
     font-size: 14px;
     line-height: 1.5;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    cursor: text !important;
+}
+
+/* Ensure all child elements are also selectable */
+.discord-summarizer-history-item-content * {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    cursor: text !important;
 }
 
 /* Notification */

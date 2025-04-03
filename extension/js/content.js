@@ -145,6 +145,48 @@ function displaySummaryHistory(summaries) {
         `;
         summaryHeader.appendChild(summaryInfo);
 
+        // Add copy button
+        const copyBtn = document.createElement("button");
+        copyBtn.className = "discord-summarizer-copy-btn";
+        copyBtn.innerHTML = "Copy";
+        copyBtn.style.display = "none"; // Hidden by default
+        copyBtn.addEventListener("click", () => {
+            // Get the content element
+            const content = summaryItem.querySelector(
+                ".discord-summarizer-history-item-content"
+            );
+
+            // Use modern clipboard API if available, fallback to execCommand
+            if (navigator.clipboard && window.isSecureContext) {
+                // Get the text content
+                const textContent = content.innerText || content.textContent;
+                // Use the Clipboard API
+                navigator.clipboard.writeText(textContent);
+            } else {
+                // Fallback for older browsers
+                // Create a range and select the content
+                const range = document.createRange();
+                range.selectNodeContents(content);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+
+                // Copy to clipboard
+                document.execCommand("copy");
+
+                // Deselect
+                selection.removeAllRanges();
+            }
+
+            // Show feedback
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = "Copied!";
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+            }, 2000);
+        });
+        summaryHeader.appendChild(copyBtn);
+
         // Add expand/collapse button
         const toggleBtn = document.createElement("button");
         toggleBtn.className = "discord-summarizer-history-toggle";
@@ -157,6 +199,9 @@ function displaySummaryHistory(summaries) {
             const isVisible = content.style.display !== "none";
             content.style.display = isVisible ? "none" : "block";
             toggleBtn.innerHTML = isVisible ? "+" : "-";
+
+            // Toggle copy button visibility
+            copyBtn.style.display = isVisible ? "none" : "inline-block";
         });
         summaryHeader.appendChild(toggleBtn);
 
@@ -167,6 +212,9 @@ function displaySummaryHistory(summaries) {
         summaryContent.className = "discord-summarizer-history-item-content";
         summaryContent.innerHTML = summary.summary;
         summaryContent.style.display = "none"; // Hidden by default
+        summaryContent.setAttribute("tabindex", "0"); // Make focusable for better accessibility
+        summaryContent.setAttribute("role", "textbox"); // Semantic role for text content
+        summaryContent.setAttribute("aria-readonly", "true"); // Indicate it's readonly
         summaryItem.appendChild(summaryContent);
 
         content.appendChild(summaryItem);
@@ -728,6 +776,48 @@ function displaySummary(summary, preferences, options = {}) {
     const content = document.createElement("div");
     content.className = "discord-summarizer-content";
     content.innerHTML = summary;
+    content.setAttribute("tabindex", "0"); // Make focusable for better accessibility
+    content.setAttribute("role", "textbox"); // Semantic role for text content
+    content.setAttribute("aria-readonly", "true"); // Indicate it's readonly
+
+    // Add a copy button
+    const copyBtn = document.createElement("button");
+    copyBtn.className = "discord-summarizer-copy-btn";
+    copyBtn.innerHTML = "Copy";
+    copyBtn.addEventListener("click", () => {
+        // Use modern clipboard API if available, fallback to execCommand
+        if (navigator.clipboard && window.isSecureContext) {
+            // Get the text content
+            const textContent = content.innerText || content.textContent;
+            // Use the Clipboard API
+            navigator.clipboard.writeText(textContent);
+        } else {
+            // Fallback for older browsers
+            // Create a range and select the content
+            const range = document.createRange();
+            range.selectNodeContents(content);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+
+            // Copy to clipboard
+            document.execCommand("copy");
+
+            // Deselect
+            selection.removeAllRanges();
+        }
+
+        // Show feedback
+        const originalText = copyBtn.innerHTML;
+        copyBtn.innerHTML = "Copied!";
+        setTimeout(() => {
+            copyBtn.innerHTML = originalText;
+        }, 2000);
+    });
+
+    // Add the copy button to the header
+    header.insertBefore(copyBtn, closeBtn);
+
     summaryContainer.appendChild(content);
 
     // Find the messages container
