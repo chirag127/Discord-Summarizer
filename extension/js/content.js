@@ -625,12 +625,28 @@ async function handleSummarizeFromPopup(sendResponse, options = {}) {
                 summary ? summary.substring(0, 50) + "..." : "No summary"
             );
 
-            // Display the summary
-            displaySummary(summary, preferences, {
-                title: "Unread Messages Summary",
-            });
+            // For recent messages, send the summary back to the popup instead of displaying it on the page
+            if (messageSelection === "recent") {
+                // Create a title based on the message selection and preferences
+                const title = `Recent Messages Summary (${messageCount} messages, ${preferences.summaryMode.replace(
+                    "_",
+                    " "
+                )} mode)`;
 
-            sendResponse({ success: true });
+                // Send the summary back to the popup
+                sendResponse({
+                    success: true,
+                    summary: summary,
+                    title: title,
+                });
+            } else {
+                // For unread messages, display the summary in Discord as before
+                displaySummary(summary, preferences, {
+                    title: "Unread Messages Summary",
+                });
+
+                sendResponse({ success: true });
+            }
         } catch (summaryError) {
             console.error("Error getting summary:", summaryError);
             sendResponse({

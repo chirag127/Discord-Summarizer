@@ -1,5 +1,83 @@
 // Popup script for Discord Summarizer extension
 
+// Function to display summary in the popup
+function displaySummaryInPopup(summary, title) {
+    // Get the summary container and content elements
+    const summaryContainer = document.getElementById("popup-summary-container");
+    const summaryContent = document.getElementById("popup-summary-content");
+    const copyBtn = document.getElementById("popup-copy-btn");
+
+    // Update the section title if needed
+    const sectionTitle = summaryContainer.querySelector(".section-title");
+    if (sectionTitle) {
+        sectionTitle.textContent = title || "Summary";
+    }
+
+    // Set the summary content
+    summaryContent.innerHTML = summary;
+
+    // Show the summary container
+    summaryContainer.style.display = "block";
+
+    // Set up the copy button functionality
+    if (copyBtn) {
+        copyBtn.onclick = () => {
+            // Get the text content
+            const textContent =
+                summaryContent.innerText || summaryContent.textContent;
+
+            // Use the Clipboard API if available
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard
+                    .writeText(textContent)
+                    .then(() => {
+                        // Show feedback
+                        const originalText = copyBtn.textContent;
+                        copyBtn.textContent = "Copied!";
+                        setTimeout(() => {
+                            copyBtn.textContent = originalText;
+                        }, 2000);
+                    })
+                    .catch((err) => {
+                        console.error("Could not copy text: ", err);
+                    });
+            } else {
+                // Fallback for older browsers
+                // Create a temporary textarea element
+                const textarea = document.createElement("textarea");
+                textarea.value = textContent;
+                textarea.style.position = "fixed"; // Prevent scrolling to bottom
+                document.body.appendChild(textarea);
+                textarea.focus();
+                textarea.select();
+
+                try {
+                    // Execute the copy command
+                    const successful = document.execCommand("copy");
+                    if (successful) {
+                        // Show feedback
+                        const originalText = copyBtn.textContent;
+                        copyBtn.textContent = "Copied!";
+                        setTimeout(() => {
+                            copyBtn.textContent = originalText;
+                        }, 2000);
+                    } else {
+                        console.error("Copy command was unsuccessful");
+                    }
+                } catch (err) {
+                    console.error("Could not execute copy command: ", err);
+                }
+
+                // Clean up
+                document.body.removeChild(textarea);
+            }
+        };
+    }
+
+    // Scroll to the summary container
+    summaryContainer.scrollIntoView({ behavior: "smooth" });
+}
+
 // Initialize popup
 document.addEventListener("DOMContentLoaded", () => {
     // Get elements
@@ -36,11 +114,34 @@ document.addEventListener("DOMContentLoaded", () => {
     // Save preferences when changed
     summaryModeSelect.addEventListener("change", () => {
         chrome.storage.sync.set({ summaryMode: summaryModeSelect.value });
+        // Clear any displayed summary when changing mode
+        clearSummary();
     });
 
     summaryStyleSelect.addEventListener("change", () => {
         chrome.storage.sync.set({ summaryStyle: summaryStyleSelect.value });
+        // Clear any displayed summary when changing style
+        clearSummary();
     });
+
+    // Function to clear any displayed summary
+    function clearSummary() {
+        const summaryContainer = document.getElementById(
+            "popup-summary-container"
+        );
+        const summaryContent = document.getElementById("popup-summary-content");
+
+        // Hide the container and clear the content
+        if (summaryContainer) {
+            summaryContainer.style.display = "none";
+        }
+        if (summaryContent) {
+            summaryContent.innerHTML = "";
+        }
+
+        // Clear the status message
+        statusDiv.textContent = "";
+    }
 
     // Handle message selection change
     messageSelectionSelect.addEventListener("change", () => {
@@ -49,6 +150,9 @@ document.addEventListener("DOMContentLoaded", () => {
         chrome.storage.sync.set({
             messageSelection: messageSelectionSelect.value,
         });
+
+        // Clear any displayed summary when changing selection type
+        clearSummary();
     });
 
     // Save message count when changed
@@ -59,6 +163,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (count > 100) count = 100;
         messageCountInput.value = count;
         chrome.storage.sync.set({ messageCount: count });
+
+        // Clear any displayed summary when changing message count
+        clearSummary();
     });
 
     // Handle summarize button click
@@ -135,7 +242,24 @@ document.addEventListener("DOMContentLoaded", () => {
                                 }
 
                                 if (response && response.success) {
-                                    statusDiv.textContent = "Summary created!";
+                                    // Check if this is a recent messages summary that should be displayed in the popup
+                                    if (
+                                        messageSelection === "recent" &&
+                                        response.summary
+                                    ) {
+                                        // Show the summary in the popup
+                                        displaySummaryInPopup(
+                                            response.summary,
+                                            response.title ||
+                                                "Recent Messages Summary"
+                                        );
+                                        statusDiv.textContent =
+                                            "Summary created!";
+                                    } else {
+                                        // For unread messages, the summary is displayed in Discord
+                                        statusDiv.textContent =
+                                            "Summary created!";
+                                    }
                                 } else if (response && response.error) {
                                     statusDiv.textContent =
                                         "Error: " + response.error;

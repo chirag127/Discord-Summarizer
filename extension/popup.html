@@ -74,6 +74,43 @@
       margin-top: 15px;
       color: #72767d;
     }
+
+    /* Popup summary styles */
+    .popup-summary-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .popup-copy-btn {
+      background-color: #4f545c;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      width: auto;
+      margin-top: 0;
+    }
+
+    .popup-copy-btn:hover {
+      background-color: #5865f2;
+    }
+
+    .popup-summary-content {
+      padding: 10px;
+      background-color: #36393f;
+      border-radius: 4px;
+      color: #dcddde;
+      font-size: 14px;
+      line-height: 1.5;
+      max-height: 300px;
+      overflow-y: auto;
+      border-left: 3px solid #5865f2;
+      user-select: text;
+    }
   </style>
 </head>
 
@@ -115,6 +152,15 @@
   <div class="section">
     <button id="summarize-btn">Summarize Messages</button>
     <div id="status" class="status"></div>
+  </div>
+
+  <!-- Summary container for displaying recent message summaries in the popup -->
+  <div id="popup-summary-container" class="section" style="display: none;">
+    <div class="popup-summary-header">
+      <div class="section-title">Summary</div>
+      <button id="popup-copy-btn" class="popup-copy-btn">Copy</button>
+    </div>
+    <div id="popup-summary-content" class="popup-summary-content"></div>
   </div>
 
   <div class="footer">
