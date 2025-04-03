@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Discord Summarizer</title>
+    <style>
+        :root {
+            --discord-dark: #36393f;
+            --discord-darker: #2f3136;
+            --discord-darkest: #202225;
+            --discord-light: #dcddde;
+            --discord-white: #ffffff;
+            --discord-blue: #5865f2;
+            --discord-blue-hover: #4752c4;
+            --discord-gray: #72767d;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--discord-dark);
+            color: var(--discord-light);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+        }
+        
+        .logo {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 20px;
+        }
+        
+        h1, h2, h3 {
+            color: var(--discord-white);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        section {
+            background-color: var(--discord-darker);
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .button {
+            display: inline-block;
+            background-color: var(--discord-blue);
+            color: var(--discord-white);
+            padding: 12px 24px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.2s;
+            margin-top: 20px;
+        }
+        
+        .button:hover {
+            background-color: var(--discord-blue-hover);
+        }
+        
+        .last-updated {
+            font-style: italic;
+            color: var(--discord-gray);
+            margin-bottom: 20px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--discord-gray);
+            font-size: 0.9rem;
+        }
+        
+        footer a {
+            color: var(--discord-blue);
+            text-decoration: none;
+        }
+        
+        footer a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="extension/images/icon128.png" alt="Discord Summarizer Logo" class="logo">
+            <h1>Privacy Policy</h1>
+            <p class="last-updated">Last Updated: June 2024</p>
+            <a href="index.html" class="button">Back to Home</a>
+        </header>
+        
+        <section>
+            <h2>Introduction</h2>
+            <p>
+                This Privacy Policy explains how Discord Summarizer ("we", "us", or "our") collects, uses, and protects your information when you use our Chrome extension.
+                We are committed to ensuring the privacy and security of your data. Please read this policy carefully to understand our practices regarding your information.
+            </p>
+        </section>
+        
+        <section>
+            <h2>Information We Collect</h2>
+            <p>When you use the Discord Summarizer extension, we collect the following information:</p>
+            <ul>
+                <li><strong>Message Content:</strong> The text content of Discord messages that you choose to summarize.</li>
+                <li><strong>User Preferences:</strong> Your selected summarization mode, style, and other preferences stored locally in your browser.</li>
+                <li><strong>Discord User ID:</strong> A unique identifier used to associate your preferences with your Discord account.</li>
+            </ul>
+            <p>
+                <strong>Important:</strong> We only process message content when you explicitly request a summary by clicking the "Summarize" button. 
+                We do not continuously monitor or collect messages from your Discord conversations.
+            </p>
+        </section>
+        
+        <section>
+            <h2>How We Use Your Information</h2>
+            <p>We use the collected information for the following purposes:</p>
+            <ul>
+                <li>To generate summaries of Discord messages using Google Gemini-2.5-pro.</li>
+                <li>To provide and maintain the functionality of the extension.</li>
+                <li>To improve the extension based on usage patterns and feedback.</li>
+                <li>To store your preferences for future use.</li>
+            </ul>
+        </section>
+        
+        <section>
+            <h2>Data Storage and Security</h2>
+            <p>
+                Your preferences are stored locally in your browser using Chrome's storage API. Message content is temporarily processed 
+                on our secure servers and through Google's Gemini API to generate summaries, but is not permanently stored.
+            </p>
+            <p>
+                We implement appropriate security measures to protect your information against unauthorized access, alteration, disclosure, or destruction.
+                However, no method of transmission over the Internet or electronic storage is 100% secure, and we cannot guarantee absolute security.
+            </p>
+        </section>
+        
+        <section>
+            <h2>Third-Party Services</h2>
+            <p>
+                We use Google's Gemini API to process and summarize Discord messages. Your use of the Discord Summarizer extension is also subject to 
+                Google's Privacy Policy and Terms of Service. We encourage you to review these policies.
+            </p>
+            <p>
+                The extension interacts with Discord's web interface but does not share your data with Discord beyond what you already share by using their service.
+            </p>
+        </section>
+        
+        <section>
+            <h2>Your Rights</h2>
+            <p>You have the right to:</p>
+            <ul>
+                <li>Access the personal information we hold about you</li>
+                <li>Request correction of your personal information</li>
+                <li>Request deletion of your personal information</li>
+                <li>Object to processing of your personal information</li>
+                <li>Request restriction of processing your personal information</li>
+                <li>Request transfer of your personal information</li>
+                <li>Withdraw consent</li>
+            </ul>
+        </section>
+        
+        <section>
+            <h2>Changes to This Privacy Policy</h2>
+            <p>
+                We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page.
+                You are advised to review this Privacy Policy periodically for any changes. Changes to this Privacy Policy are effective when they are posted on this page.
+            </p>
+        </section>
+        
+        <section>
+            <h2>Contact Us</h2>
+            <p>
+                If you have any questions about this Privacy Policy, please contact us through our GitHub repository or by opening an issue.
+            </p>
+        </section>
+        
+        <footer>
+            <p>
+                &copy; 2023-2024 Discord Summarizer | 
+                <a href="index.html">Home</a> | 
+                <a href="https://github.com/yourusername/Discord-Summarizer">GitHub</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

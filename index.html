@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Summarizer - Chrome Extension</title>
+    <style>
+        :root {
+            --discord-dark: #36393f;
+            --discord-darker: #2f3136;
+            --discord-darkest: #202225;
+            --discord-light: #dcddde;
+            --discord-white: #ffffff;
+            --discord-blue: #5865f2;
+            --discord-blue-hover: #4752c4;
+            --discord-gray: #72767d;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--discord-dark);
+            color: var(--discord-light);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+        }
+        
+        .logo {
+            width: 128px;
+            height: 128px;
+            margin-bottom: 20px;
+        }
+        
+        h1, h2, h3 {
+            color: var(--discord-white);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .tagline {
+            font-size: 1.2rem;
+            color: var(--discord-gray);
+            margin-bottom: 30px;
+        }
+        
+        section {
+            background-color: var(--discord-darker);
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .feature-card {
+            background-color: var(--discord-darkest);
+            border-radius: 8px;
+            padding: 20px;
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature-card h3 {
+            margin-top: 0;
+            color: var(--discord-blue);
+        }
+        
+        .button {
+            display: inline-block;
+            background-color: var(--discord-blue);
+            color: var(--discord-white);
+            padding: 12px 24px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.2s;
+            margin-top: 20px;
+        }
+        
+        .button:hover {
+            background-color: var(--discord-blue-hover);
+        }
+        
+        .installation-steps {
+            counter-reset: step-counter;
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        .installation-steps li {
+            position: relative;
+            padding-left: 50px;
+            margin-bottom: 15px;
+            counter-increment: step-counter;
+        }
+        
+        .installation-steps li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 30px;
+            height: 30px;
+            background-color: var(--discord-blue);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        code {
+            background-color: var(--discord-darkest);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--discord-gray);
+            font-size: 0.9rem;
+        }
+        
+        footer a {
+            color: var(--discord-blue);
+            text-decoration: none;
+        }
+        
+        footer a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="extension/images/icon128.png" alt="Discord Summarizer Logo" class="logo">
+            <h1>Discord Summarizer</h1>
+            <p class="tagline">Summarize Discord messages with Google Gemini-2.5-pro</p>
+            <a href="https://github.com/yourusername/Discord-Summarizer" class="button">View on GitHub</a>
+            <a href="privacy-policy.html" class="button">Privacy Policy</a>
+        </header>
+        
+        <section>
+            <h2>About</h2>
+            <p>
+                Discord Summarizer is a Chrome extension that helps you catch up on conversations by summarizing unread Discord messages. 
+                It uses Google Gemini-2.5-pro to generate concise, accurate summaries of conversations, saving you time and helping you stay in the loop.
+            </p>
+            <p>
+                Whether you've been away from a busy server or just want to quickly understand what's happening in a channel, 
+                Discord Summarizer makes it easy to get up to speed without scrolling through hundreds of messages.
+            </p>
+        </section>
+        
+        <section>
+            <h2>Features</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>Manual Summarization</h3>
+                    <p>Trigger summarization with a single click whenever you need it.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Works Everywhere</h3>
+                    <p>Functions across all Discord servers and channels without restrictions.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Multiple Modes</h3>
+                    <p>Choose between Brief, Detailed, or Key Takeaways summarization styles.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Customizable Format</h3>
+                    <p>Get summaries in paragraph format or as bullet points based on your preference.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Message Selection</h3>
+                    <p>Summarize unread messages or choose a specific number of recent messages.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Seamless Integration</h3>
+                    <p>Summaries appear directly in Discord's interface for a native experience.</p>
+                </div>
+            </div>
+        </section>
+        
+        <section>
+            <h2>Installation</h2>
+            <ol class="installation-steps">
+                <li>Clone the repository or download the source code from GitHub</li>
+                <li>Open Chrome and navigate to <code>chrome://extensions/</code></li>
+                <li>Enable "Developer mode" in the top-right corner</li>
+                <li>Click "Load unpacked" and select the <code>extension</code> folder from the repository</li>
+                <li>The Discord Summarizer extension should now appear in your extensions list</li>
+                <li>Pin the extension to your toolbar for easy access</li>
+            </ol>
+        </section>
+        
+        <section>
+            <h2>How to Use</h2>
+            <ol class="installation-steps">
+                <li>Navigate to Discord in your browser</li>
+                <li>When you see unread messages (indicated by the "New Messages" divider), click the "Summarize" button</li>
+                <li>Choose your preferred summarization mode from the dropdown (Brief, Detailed, or Key Takeaways)</li>
+                <li>Select whether to summarize unread messages or a specific number of recent messages</li>
+                <li>The summary will appear directly in the Discord chat</li>
+            </ol>
+        </section>
+        
+        <section>
+            <h2>Technology</h2>
+            <p>Discord Summarizer is built with:</p>
+            <ul>
+                <li>JavaScript (Chrome Extension Manifest V3)</li>
+                <li>Node.js/Express (Backend API)</li>
+                <li>Google Gemini-2.5-pro (AI Summarization)</li>
+            </ul>
+            <p>The extension communicates with a secure backend that handles the summarization process using Google's advanced AI models.</p>
+        </section>
+        
+        <footer>
+            <p>
+                &copy; 2023-2024 Discord Summarizer | 
+                <a href="privacy-policy.html">Privacy Policy</a> | 
+                <a href="https://github.com/yourusername/Discord-Summarizer">GitHub</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>
