@@ -54,251 +54,7 @@ function showNotification(message) {
     }, 3000);
 }
 
-// Get summary history from backend
-async function getSummaryHistory(userId) {
-    try {
-        // Check if CONFIG is defined
-        if (!CONFIG || !CONFIG.API_URL) {
-            console.error("CONFIG or CONFIG.API_URL is not defined");
-            // Fallback to localhost if CONFIG is not defined
-            var apiUrl = "http://localhost:3000";
-        } else {
-            var apiUrl = CONFIG.API_URL;
-        }
-
-        console.log(
-            "Fetching summary history from:",
-            `${apiUrl}/summaries/${userId}`
-        );
-
-        const response = await fetch(`${apiUrl}/summaries/${userId}`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
-
-        if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log("History API response:", data);
-
-        return data.summaries || [];
-    } catch (error) {
-        console.error("Error getting summary history:", error);
-        throw error;
-    }
-}
-
-// Display summary history in Discord
-function displaySummaryHistory(summaries) {
-    // Create history container
-    const historyContainer = document.createElement("div");
-    historyContainer.className = "discord-summarizer-history";
-
-    // Create header
-    const header = document.createElement("div");
-    header.className = "discord-summarizer-header";
-
-    const title = document.createElement("h3");
-    title.textContent = "Summary History";
-    header.appendChild(title);
-
-    const closeBtn = document.createElement("button");
-    closeBtn.className = "discord-summarizer-close";
-    closeBtn.innerHTML = "×";
-    closeBtn.addEventListener("click", () => {
-        historyContainer.remove();
-    });
-    header.appendChild(closeBtn);
-
-    historyContainer.appendChild(header);
-
-    // Create content
-    const content = document.createElement("div");
-    content.className = "discord-summarizer-history-content";
-
-    // Add each summary
-    summaries.forEach((summary) => {
-        const summaryItem = document.createElement("div");
-        summaryItem.className = "discord-summarizer-history-item";
-
-        // Create summary header
-        const summaryHeader = document.createElement("div");
-        summaryHeader.className = "discord-summarizer-history-item-header";
-
-        // Format date
-        const date = new Date(summary.createdAt);
-        const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
-
-        // Add summary info
-        const summaryInfo = document.createElement("div");
-        summaryInfo.className = "discord-summarizer-history-item-info";
-        summaryInfo.innerHTML = `
-            <span class="discord-summarizer-history-date">${formattedDate}</span>
-            <span class="discord-summarizer-history-mode">${summary.mode.replace(
-                "_",
-                " "
-            )}</span>
-        `;
-        summaryHeader.appendChild(summaryInfo);
-
-        // Add copy button
-        const copyBtn = document.createElement("button");
-        copyBtn.className = "discord-summarizer-copy-btn";
-        copyBtn.innerHTML = "Copy";
-        copyBtn.style.display = "none"; // Hidden by default
-        copyBtn.addEventListener("click", () => {
-            // Get the content element
-            const content = summaryItem.querySelector(
-                ".discord-summarizer-history-item-content"
-            );
-
-            // Use modern clipboard API if available, fallback to execCommand
-            if (navigator.clipboard && window.isSecureContext) {
-                // Get the text content
-                const textContent = content.innerText || content.textContent;
-                // Use the Clipboard API
-                navigator.clipboard.writeText(textContent);
-            } else {
-                // Fallback for older browsers
-                // Create a range and select the content
-                const range = document.createRange();
-                range.selectNodeContents(content);
-                const selection = window.getSelection();
-                selection.removeAllRanges();
-                selection.addRange(range);
-
-                // Copy to clipboard
-                document.execCommand("copy");
-
-                // Deselect
-                selection.removeAllRanges();
-            }
-
-            // Show feedback
-            const originalText = copyBtn.innerHTML;
-            copyBtn.innerHTML = "Copied!";
-            setTimeout(() => {
-                copyBtn.innerHTML = originalText;
-            }, 2000);
-        });
-        summaryHeader.appendChild(copyBtn);
-
-        // Add expand/collapse button
-        const toggleBtn = document.createElement("button");
-        toggleBtn.className = "discord-summarizer-history-toggle";
-        toggleBtn.innerHTML = "+";
-        toggleBtn.addEventListener("click", () => {
-            // Toggle content visibility
-            const content = summaryItem.querySelector(
-                ".discord-summarizer-history-item-content"
-            );
-            const isVisible = content.style.display !== "none";
-            content.style.display = isVisible ? "none" : "block";
-            toggleBtn.innerHTML = isVisible ? "+" : "-";
-
-            // Toggle copy button visibility
-            copyBtn.style.display = isVisible ? "none" : "inline-block";
-        });
-        summaryHeader.appendChild(toggleBtn);
-
-        summaryItem.appendChild(summaryHeader);
-
-        // Create summary content
-        const summaryContent = document.createElement("div");
-        summaryContent.className = "discord-summarizer-history-item-content";
-        summaryContent.innerHTML = summary.summary;
-        summaryContent.style.display = "none"; // Hidden by default
-        summaryContent.setAttribute("tabindex", "0"); // Make focusable for better accessibility
-        summaryContent.setAttribute("role", "textbox"); // Semantic role for text content
-        summaryContent.setAttribute("aria-readonly", "true"); // Indicate it's readonly
-        summaryItem.appendChild(summaryContent);
-
-        content.appendChild(summaryItem);
-    });
-
-    historyContainer.appendChild(content);
-
-    // Find the messages container
-    const messagesContainer = document.querySelector(
-        '[class*="messagesWrapper"]'
-    );
-
-    if (messagesContainer) {
-        // Insert at the bottom
-        messagesContainer.appendChild(historyContainer);
-
-        // Scroll to the history
-        historyContainer.scrollIntoView({ behavior: "smooth" });
-    }
-}
-
-// Handle history button click
-async function handleHistoryClick() {
-    try {
-        console.log("History button clicked");
-
-        // Show loading state
-        const historyBtn = document.getElementById(
-            "discord-summarizer-history-btn"
-        );
-        const originalText = historyBtn.innerHTML;
-        historyBtn.innerHTML = "<span>Loading...</span>";
-        historyBtn.disabled = true;
-
-        // Get user ID
-        const userId = getDiscordUserId();
-        console.log("User ID for history:", userId);
-
-        if (!userId) {
-            showNotification("Unable to identify user. Please try again.");
-            historyBtn.innerHTML = originalText;
-            historyBtn.disabled = false;
-            return;
-        }
-
-        try {
-            // Get summaries from backend
-            const summaries = await getSummaryHistory(userId);
-            console.log("Summaries retrieved:", summaries.length);
-
-            if (summaries.length === 0) {
-                showNotification("No summary history found");
-                historyBtn.innerHTML = originalText;
-                historyBtn.disabled = false;
-                return;
-            }
-
-            // Display the summaries
-            displaySummaryHistory(summaries);
-
-            // Reset button
-            historyBtn.innerHTML = originalText;
-            historyBtn.disabled = false;
-        } catch (historyError) {
-            console.error("Error getting summary history:", historyError);
-            showNotification(
-                "Error: " +
-                    (historyError.message || "Failed to get summary history")
-            );
-            historyBtn.innerHTML = originalText;
-            historyBtn.disabled = false;
-        }
-    } catch (error) {
-        console.error("Error fetching summary history:", error);
-        showNotification("Error fetching summary history");
-
-        // Reset button
-        const historyBtn = document.getElementById(
-            "discord-summarizer-history-btn"
-        );
-        historyBtn.innerHTML = "<span>History</span>";
-        historyBtn.disabled = false;
-    }
-}
+// These history-related functions have been removed
 
 // Initialize the extension immediately and also when the page is fully loaded
 initDiscordSummarizer();
@@ -358,136 +114,13 @@ function addSummarizeButton() {
             buttonContainer.className = "discord-summarizer-container";
             buttonContainer.appendChild(summarizeBtn);
 
-            // Add mode selector
-            const modeSelector = createModeSelector();
-            buttonContainer.appendChild(modeSelector);
-
-            // Add message selection dropdown
-            const messageSelector = createMessageSelector();
-            buttonContainer.appendChild(messageSelector);
-
-            // Add history button
-            const historyBtn = document.createElement("button");
-            historyBtn.id = "discord-summarizer-history-btn";
-            historyBtn.className = "discord-summarizer-history-btn";
-            historyBtn.innerHTML = "<span>History</span>";
-            historyBtn.title = "View summary history";
-            historyBtn.addEventListener("click", handleHistoryClick);
-            buttonContainer.appendChild(historyBtn);
-
             // Insert before the chat input
             chatInput.parentNode.insertBefore(buttonContainer, chatInput);
         }
     }, 1000);
 }
 
-// Create mode selector dropdown
-function createModeSelector() {
-    const modeSelector = document.createElement("select");
-    modeSelector.id = "discord-summarizer-mode";
-    modeSelector.className = "discord-summarizer-mode";
-
-    const modes = [
-        { value: "brief", label: "Brief" },
-        { value: "detailed", label: "Detailed" },
-        { value: "key_takeaways", label: "Key Takeaways" },
-    ];
-
-    modes.forEach((mode) => {
-        const option = document.createElement("option");
-        option.value = mode.value;
-        option.textContent = mode.label;
-        modeSelector.appendChild(option);
-    });
-
-    // Get saved preference
-    chrome.runtime.sendMessage(
-        { action: "getSummaryPreferences" },
-        (response) => {
-            if (response && response.summaryMode) {
-                modeSelector.value = response.summaryMode;
-            }
-        }
-    );
-
-    // Save preference when changed
-    modeSelector.addEventListener("change", (e) => {
-        chrome.storage.sync.set({ summaryMode: e.target.value });
-    });
-
-    return modeSelector;
-}
-
-// Create message selection dropdown
-function createMessageSelector() {
-    const container = document.createElement("div");
-    container.className = "discord-summarizer-message-selector-container";
-
-    const messageSelector = document.createElement("select");
-    messageSelector.id = "discord-summarizer-message-selection";
-    messageSelector.className = "discord-summarizer-message-selection";
-
-    const options = [
-        { value: "unread", label: "Unread Messages" },
-        { value: "recent", label: "Recent Messages" },
-    ];
-
-    options.forEach((option) => {
-        const optionElement = document.createElement("option");
-        optionElement.value = option.value;
-        optionElement.textContent = option.label;
-        messageSelector.appendChild(optionElement);
-    });
-
-    container.appendChild(messageSelector);
-
-    // Create message count input (initially hidden)
-    const countContainer = document.createElement("div");
-    countContainer.className = "discord-summarizer-count-container";
-    countContainer.style.display = "none";
-
-    const countInput = document.createElement("input");
-    countInput.type = "number";
-    countInput.id = "discord-summarizer-message-count";
-    countInput.className = "discord-summarizer-message-count";
-    countInput.min = 5;
-    countInput.max = 100;
-    countInput.value = 20;
-
-    countContainer.appendChild(countInput);
-    container.appendChild(countContainer);
-
-    // Get saved preferences
-    chrome.storage.sync.get(["messageSelection", "messageCount"], (result) => {
-        if (result.messageSelection) {
-            messageSelector.value = result.messageSelection;
-            // Show/hide count input based on selection
-            countContainer.style.display =
-                result.messageSelection === "recent" ? "block" : "none";
-        }
-        if (result.messageCount) {
-            countInput.value = result.messageCount;
-        }
-    });
-
-    // Save preferences when changed
-    messageSelector.addEventListener("change", (e) => {
-        const isRecent = e.target.value === "recent";
-        countContainer.style.display = isRecent ? "block" : "none";
-        chrome.storage.sync.set({ messageSelection: e.target.value });
-    });
-
-    countInput.addEventListener("change", () => {
-        // Ensure value is within bounds
-        let count = parseInt(countInput.value);
-        if (isNaN(count) || count < 5) count = 5;
-        if (count > 100) count = 100;
-        countInput.value = count;
-        chrome.storage.sync.set({ messageCount: count });
-    });
-
-    return container;
-}
+// These functions have been removed as they are no longer needed
 
 // Handle summarize button click
 async function handleSummarizeClick() {
@@ -498,65 +131,43 @@ async function handleSummarizeClick() {
         summarizeBtn.innerHTML = "<span>Summarizing...</span>";
         summarizeBtn.disabled = true;
 
-        // Get saved preferences for message selection
-        chrome.storage.sync.get(
-            ["messageSelection", "messageCount"],
-            async (result) => {
-                try {
-                    const messageSelection =
-                        result.messageSelection || "unread";
-                    const messageCount = result.messageCount || 20;
+        try {
+            // Use fixed defaults: "brief" mode and "unread" messages
+            const summaryTitle = "Unread Messages Summary";
 
-                    // Get messages based on selection
-                    let messages = [];
-                    let summaryTitle = "";
+            // Get unread messages
+            const messages = getUnreadMessages();
 
-                    if (messageSelection === "unread") {
-                        messages = getUnreadMessages();
-                        summaryTitle = "Unread Messages Summary";
-
-                        if (messages.length === 0) {
-                            showNotification("No unread messages found");
-                            summarizeBtn.innerHTML = originalText;
-                            summarizeBtn.disabled = false;
-                            return;
-                        }
-                    } else {
-                        messages = getRecentMessages(messageCount);
-                        summaryTitle = `Last ${messageCount} Messages Summary`;
-
-                        if (messages.length === 0) {
-                            showNotification(
-                                "No messages found in this channel"
-                            );
-                            summarizeBtn.innerHTML = originalText;
-                            summarizeBtn.disabled = false;
-                            return;
-                        }
-                    }
-
-                    // Get summary preferences
-                    const preferences = await getSummaryPreferences();
-
-                    // Send to backend for summarization
-                    const summary = await getSummary(messages, preferences);
-
-                    // Display the summary
-                    displaySummary(summary, preferences, {
-                        title: summaryTitle,
-                    });
-
-                    // Reset button
-                    summarizeBtn.innerHTML = originalText;
-                    summarizeBtn.disabled = false;
-                } catch (error) {
-                    console.error("Error in message selection:", error);
-                    showNotification("Error summarizing messages");
-                    summarizeBtn.innerHTML = originalText;
-                    summarizeBtn.disabled = false;
-                }
+            if (messages.length === 0) {
+                showNotification("No unread messages found");
+                summarizeBtn.innerHTML = originalText;
+                summarizeBtn.disabled = false;
+                return;
             }
-        );
+
+            // Set fixed preferences
+            const preferences = {
+                summaryMode: "brief",
+                summaryStyle: "bullets",
+            };
+
+            // Send to backend for summarization
+            const summary = await getSummary(messages, preferences);
+
+            // Display the summary
+            displaySummary(summary, preferences, {
+                title: summaryTitle,
+            });
+
+            // Reset button
+            summarizeBtn.innerHTML = originalText;
+            summarizeBtn.disabled = false;
+        } catch (error) {
+            console.error("Error in message selection:", error);
+            showNotification("Error summarizing messages");
+            summarizeBtn.innerHTML = originalText;
+            summarizeBtn.disabled = false;
+        }
     } catch (error) {
         console.error("Error summarizing messages:", error);
         showNotification("Error summarizing messages");
@@ -658,22 +269,7 @@ function getRecentMessages(count = 20) {
     return messages;
 }
 
-// Get summary preferences from storage
-function getSummaryPreferences() {
-    return new Promise((resolve) => {
-        chrome.runtime.sendMessage(
-            { action: "getSummaryPreferences" },
-            (response) => {
-                resolve(
-                    response || {
-                        summaryMode: "brief",
-                        summaryStyle: "bullets",
-                    }
-                );
-            }
-        );
-    });
-}
+// This function has been removed as we're using fixed preferences
 
 // This function has been moved to the top of the file
 
@@ -853,7 +449,7 @@ function displaySummary(summary, preferences, options = {}) {
 // Handle summarize request from popup
 async function handleSummarizeFromPopup(sendResponse, options = {}) {
     try {
-        console.log("Handling popup request with options:", options);
+        console.log("Handling popup request");
 
         // Check if we're on Discord
         if (!window.location.href.includes("discord.com")) {
@@ -863,41 +459,24 @@ async function handleSummarizeFromPopup(sendResponse, options = {}) {
             return;
         }
 
-        // Get messages based on selection type
-        let messages = [];
-        const messageSelection = options.messageSelection || "unread";
-        const messageCount = options.messageCount || 20;
+        // Always use unread messages (fixed default)
+        let messages = getUnreadMessages();
+        console.log("Unread messages found:", messages.length);
 
-        console.log("Message selection:", messageSelection);
-        console.log("Message count:", messageCount);
-
-        if (messageSelection === "unread") {
-            messages = getUnreadMessages();
-            console.log("Unread messages found:", messages.length);
-            if (messages.length === 0) {
-                sendResponse({
-                    success: false,
-                    error: "No unread messages found",
-                });
-                showNotification("No unread messages found");
-                return;
-            }
-        } else if (messageSelection === "recent") {
-            messages = getRecentMessages(messageCount);
-            console.log("Recent messages found:", messages.length);
-            if (messages.length === 0) {
-                sendResponse({
-                    success: false,
-                    error: "No messages found in this channel",
-                });
-                showNotification("No messages found in this channel");
-                return;
-            }
+        if (messages.length === 0) {
+            sendResponse({
+                success: false,
+                error: "No unread messages found",
+            });
+            showNotification("No unread messages found");
+            return;
         }
 
-        // Get summary preferences
-        const preferences = await getSummaryPreferences();
-        console.log("Summary preferences:", preferences);
+        // Set fixed preferences
+        const preferences = {
+            summaryMode: "brief",
+            summaryStyle: "bullets",
+        };
 
         try {
             // Send to backend for summarization
@@ -909,10 +488,7 @@ async function handleSummarizeFromPopup(sendResponse, options = {}) {
 
             // Display the summary
             displaySummary(summary, preferences, {
-                title:
-                    messageSelection === "unread"
-                        ? "Unread Messages Summary"
-                        : `Last ${messageCount} Messages Summary`,
+                title: "Unread Messages Summary",
             });
 
             sendResponse({ success: true });
