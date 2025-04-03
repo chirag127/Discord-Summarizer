@@ -122,35 +122,49 @@ function initDiscordSummarizer() {
     observeDiscordNavigation();
 }
 
-// Add the summarize button to Discord UI
+// Add the summarize button to Discord UI if unread messages exist
 function addSummarizeButton() {
-    // Wait for Discord to fully load
-    const checkInterval = setInterval(() => {
-        // Look for the Discord chat input area
-        const chatInput = document.querySelector('[class*="channelTextArea"]');
+    // Look for the Discord chat input area
+    const chatInput = document.querySelector('[class*="channelTextArea"]');
+    // Check for the unread messages divider
+    const unreadDivider = document.querySelector('div[class*="divider"][class*="isUnread"]');
+    // Check if button already exists
+    const existingButton = document.getElementById("discord-summarizer-btn");
 
-        if (chatInput && !document.getElementById("discord-summarizer-btn")) {
-            clearInterval(checkInterval);
+    // Only add if chat input and unread divider exist, and button doesn't exist
+    if (chatInput && unreadDivider && !existingButton) {
+        console.log("Adding Summarize button (unread messages found).");
+        // Create the summarize button
+        const summarizeBtn = document.createElement("button");
+        summarizeBtn.id = "discord-summarizer-btn";
+        summarizeBtn.className = "discord-summarizer-btn";
+        summarizeBtn.innerHTML = "<span>Summarize</span>";
+        summarizeBtn.title = "Summarize unread messages";
 
-            // Create the summarize button
-            const summarizeBtn = document.createElement("button");
-            summarizeBtn.id = "discord-summarizer-btn";
-            summarizeBtn.className = "discord-summarizer-btn";
-            summarizeBtn.innerHTML = "<span>Summarize</span>";
-            summarizeBtn.title = "Summarize unread messages";
+        // Add click event listener
+        summarizeBtn.addEventListener("click", handleSummarizeClick);
 
-            // Add click event listener
-            summarizeBtn.addEventListener("click", handleSummarizeClick);
+        // Add the button to the UI
+        const buttonContainer = document.createElement("div");
+        buttonContainer.className = "discord-summarizer-container";
+        buttonContainer.id = "discord-summarizer-container"; // Add ID for easier removal
+        buttonContainer.appendChild(summarizeBtn);
 
-            // Add the button to the UI
-            const buttonContainer = document.createElement("div");
-            buttonContainer.className = "discord-summarizer-container";
-            buttonContainer.appendChild(summarizeBtn);
+        // Insert before the chat input
+        chatInput.parentNode.insertBefore(buttonContainer, chatInput);
+    } else if (!unreadDivider && existingButton) {
+        // If no unread divider but button exists, remove it (handled by observer now, but good practice)
+        removeSummarizeButton();
+    }
+}
 
-            // Insert before the chat input
-            chatInput.parentNode.insertBefore(buttonContainer, chatInput);
-        }
-    }, 1000);
+// Remove the summarize button from Discord UI
+function removeSummarizeButton() {
+    const buttonContainer = document.getElementById("discord-summarizer-container");
+    if (buttonContainer) {
+        console.log("Removing Summarize button (no unread messages).");
+        buttonContainer.remove();
+    }
 }
 
 // These functions have been removed as they are no longer needed
@@ -578,25 +592,62 @@ async function handleSummarizeFromPopup(sendResponse, options = {}) {
 }
 
 // Observe Discord navigation changes
+// Observe changes in Discord UI for navigation and unread status
 function observeDiscordNavigation() {
-    // Discord is a SPA, so we need to observe navigation changes
     const observer = new MutationObserver((mutations) => {
+        let unreadStatusPotentiallyChanged = false;
+
+        // Check mutations for changes that might affect the unread divider
         for (const mutation of mutations) {
-            if (
-                mutation.type === "childList" &&
-                mutation.addedNodes.length > 0
-            ) {
-                // Check if we need to re-add the summarize button
-                if (!document.getElementById("discord-summarizer-btn")) {
-                    addSummarizeButton();
-                }
+            if (mutation.type === 'childList') {
+                // Check added nodes for the divider or message list changes
+                mutation.addedNodes.forEach(node => {
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        // Check if the node itself or its descendants match the unread divider or a relevant container
+                        if (node.matches && (node.matches('div[class*="divider"][class*="isUnread"]') || node.querySelector('div[class*="divider"][class*="isUnread"]') || node.matches('[class*="scrollerInner"]') || node.matches('[class*="messagesWrapper"]'))) {
+                            unreadStatusPotentiallyChanged = true;
+                        }
+                    }
+                });
+                // Check removed nodes for the divider
+                mutation.removedNodes.forEach(node => {
+                     if (node.nodeType === Node.ELEMENT_NODE) {
+                        if (node.matches && node.matches('div[class*="divider"][class*="isUnread"]')) {
+                            unreadStatusPotentiallyChanged = true;
+                        }
+                    }
+                });
             }
+             // Also consider attribute changes on the divider itself if its class changes
+             if (mutation.type === 'attributes' && mutation.target.matches && mutation.target.matches('div[class*="divider"]')) {
+                 unreadStatusPotentiallyChanged = true;
+             }
+
+            if (unreadStatusPotentiallyChanged) break; // No need to check further mutations if we already know
+        }
+
+
+        // If potential change detected, check current state and update button
+        if (unreadStatusPotentiallyChanged) {
+             // Use a small timeout to debounce checks and wait for DOM to settle
+             setTimeout(() => {
+                const unreadDivider = document.querySelector('div[class*="divider"][class*="isUnread"]');
+                if (unreadDivider) {
+                    addSummarizeButton(); // Will only add if not already present
+                } else {
+                    removeSummarizeButton(); // Will only remove if present
+                }
+             }, 150); // Slightly increased delay for stability
         }
     });
 
-    // Start observing
+    // Start observing the body for changes relevant to messages and dividers
+    // Observe deeper within the chat area if possible for better performance,
+    // but observing the body is a robust fallback.
     observer.observe(document.body, {
         childList: true,
         subtree: true,
+        attributes: true, // Observe attribute changes (like class changes on the divider)
+        attributeFilter: ['class'] // Only watch class attribute changes
     });
 }
