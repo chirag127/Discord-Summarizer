@@ -148,7 +148,7 @@ async function handleSummarizeClick() {
             // Set fixed preferences
             const preferences = {
                 summaryMode: "brief",
-                summaryStyle: "bullets",
+                summaryStyle: "paragraphs",
             };
 
             // Send to backend for summarization
@@ -269,7 +269,22 @@ function getRecentMessages(count = 20) {
     return messages;
 }
 
-// This function has been removed as we're using fixed preferences
+// Get summary preferences from storage
+function getSummaryPreferences() {
+    return new Promise((resolve) => {
+        chrome.runtime.sendMessage(
+            { action: "getSummaryPreferences" },
+            (response) => {
+                resolve(
+                    response || {
+                        summaryMode: "brief",
+                        summaryStyle: "paragraphs",
+                    }
+                );
+            }
+        );
+    });
+}
 
 // This function has been moved to the top of the file
 
@@ -449,7 +464,7 @@ function displaySummary(summary, preferences, options = {}) {
 // Handle summarize request from popup
 async function handleSummarizeFromPopup(sendResponse, options = {}) {
     try {
-        console.log("Handling popup request");
+        console.log("Handling popup request with options:", options);
 
         // Check if we're on Discord
         if (!window.location.href.includes("discord.com")) {
@@ -459,24 +474,41 @@ async function handleSummarizeFromPopup(sendResponse, options = {}) {
             return;
         }
 
-        // Always use unread messages (fixed default)
-        let messages = getUnreadMessages();
-        console.log("Unread messages found:", messages.length);
+        // Get messages based on selection type
+        let messages = [];
+        const messageSelection = options.messageSelection || "unread";
+        const messageCount = options.messageCount || 20;
 
-        if (messages.length === 0) {
-            sendResponse({
-                success: false,
-                error: "No unread messages found",
-            });
-            showNotification("No unread messages found");
-            return;
+        console.log("Message selection:", messageSelection);
+        console.log("Message count:", messageCount);
+
+        if (messageSelection === "unread") {
+            messages = getUnreadMessages();
+            console.log("Unread messages found:", messages.length);
+            if (messages.length === 0) {
+                sendResponse({
+                    success: false,
+                    error: "No unread messages found",
+                });
+                showNotification("No unread messages found");
+                return;
+            }
+        } else if (messageSelection === "recent") {
+            messages = getRecentMessages(messageCount);
+            console.log("Recent messages found:", messages.length);
+            if (messages.length === 0) {
+                sendResponse({
+                    success: false,
+                    error: "No messages found in this channel",
+                });
+                showNotification("No messages found in this channel");
+                return;
+            }
         }
 
-        // Set fixed preferences
-        const preferences = {
-            summaryMode: "brief",
-            summaryStyle: "bullets",
-        };
+        // Get summary preferences
+        const preferences = await getSummaryPreferences();
+        console.log("Summary preferences:", preferences);
 
         try {
             // Send to backend for summarization
