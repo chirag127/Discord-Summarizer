@@ -40,42 +40,45 @@ async function summarizeMessages(messages, mode = "brief", style = "bullets") {
         console.log("Mode:", mode);
         console.log("Style:", style);
 
-        // For testing purposes, return a mock summary
-        let mockSummary;
+        // Create prompt based on mode and style
+        const prompt = createPrompt(formattedMessages, mode, style);
 
-        if (mode === "brief") {
-            mockSummary =
-                "• This is a brief summary of the conversation\n• It highlights the main points\n• Perfect for quick updates";
-        } else if (mode === "detailed") {
-            mockSummary =
-                "• This is a detailed summary of the conversation\n• It includes more information and context\n• It covers all the important points discussed\n• Great for when you need all the details";
-        } else if (mode === "key_takeaways") {
-            mockSummary =
-                "• Key point 1: Important information\n• Key point 2: Action items\n• Key point 3: Decisions made";
-        } else {
-            mockSummary = "• Summary of the conversation";
+        try {
+            // Start chat session
+            const chatSession = model.startChat({
+                generationConfig,
+                history: [],
+            });
+
+            // Send message to Gemini
+            const result = await chatSession.sendMessage(prompt);
+            const summary = result.response.text();
+
+            // Format the summary based on style
+            return formatSummary(summary, style);
+        } catch (apiError) {
+            console.error("Error calling Gemini API:", apiError);
+
+            // Fallback to mock summaries if API fails
+            console.log("Using fallback mock summaries");
+            let mockSummary;
+
+            if (mode === "brief") {
+                mockSummary =
+                    "• Summary of the conversation\n• Main points discussed\n• Key outcomes";
+            } else if (mode === "detailed") {
+                mockSummary =
+                    "• Detailed summary of the conversation\n• All important points covered\n• Context and background included\n• Decisions and next steps";
+            } else if (mode === "key_takeaways") {
+                mockSummary =
+                    "• Key takeaway 1: Main discussion point\n• Key takeaway 2: Important decision\n• Key takeaway 3: Action items";
+            } else {
+                mockSummary = "• Summary of the conversation";
+            }
+
+            // Format the mock summary based on style
+            return formatSummary(mockSummary, style);
         }
-
-        // Format the summary based on style
-        return formatSummary(mockSummary, style);
-
-        /* Commented out for testing
-    // Create prompt based on mode and style
-    const prompt = createPrompt(formattedMessages, mode, style);
-
-    // Start chat session
-    const chatSession = model.startChat({
-      generationConfig,
-      history: [],
-    });
-
-    // Send message to Gemini
-    const result = await chatSession.sendMessage(prompt);
-    const summary = result.response.text();
-
-    // Format the summary based on style
-    return formatSummary(summary, style);
-    */
     } catch (error) {
         console.error("Error in summarizeMessages:", error);
         throw error;

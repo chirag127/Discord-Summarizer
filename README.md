@@ -83,6 +83,10 @@ The Discord Summarizer Chrome Extension provides users with a manual way to summ
 
 1. Navigate to the `backend` directory
 2. Copy `.env.example` to `.env` and add your Google Gemini API key
+    - Get your API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
+    - Sign in with your Google account
+    - Click on "Get API key" or "Create API key"
+    - Copy the API key and paste it in your `.env` file
 3. Set up MongoDB:
     - For local development: Install MongoDB and set `MONGODB_URI` in `.env`
     - For production: Create a MongoDB Atlas account and set the connection string in `.env`
