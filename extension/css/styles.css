@@ -55,7 +55,8 @@
 }
 
 /* Mode selector */
-.discord-summarizer-mode {
+.discord-summarizer-mode,
+.discord-summarizer-message-selection {
     background-color: #2f3136;
     color: white;
     border: 1px solid #202225;
@@ -63,9 +64,38 @@
     padding: 7px 12px;
     font-size: 14px;
     cursor: pointer;
+    margin-right: 8px;
 }
 
-.discord-summarizer-mode:focus {
+.discord-summarizer-mode:focus,
+.discord-summarizer-message-selection:focus {
+    outline: none;
+    border-color: #5865f2;
+}
+
+/* Message selector container */
+.discord-summarizer-message-selector-container {
+    display: flex;
+    align-items: center;
+}
+
+/* Message count input */
+.discord-summarizer-count-container {
+    margin-right: 8px;
+}
+
+.discord-summarizer-message-count {
+    background-color: #2f3136;
+    color: white;
+    border: 1px solid #202225;
+    border-radius: 4px;
+    padding: 6px;
+    width: 60px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.discord-summarizer-message-count:focus {
     outline: none;
     border-color: #5865f2;
 }

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <title>Discord Summarizer</title>
   <meta charset="utf-8">
@@ -11,30 +12,36 @@
       background-color: #36393f;
       color: #dcddde;
     }
+
     h1 {
       font-size: 18px;
       margin-top: 0;
       color: white;
       text-align: center;
     }
+
     .logo {
       display: block;
       margin: 0 auto 15px;
       width: 64px;
       height: 64px;
     }
+
     .section {
       margin-bottom: 15px;
       padding: 10px;
       background-color: #2f3136;
       border-radius: 5px;
     }
+
     .section-title {
       font-weight: bold;
       margin-bottom: 5px;
       color: white;
     }
-    select, button {
+
+    select,
+    button {
       width: 100%;
       padding: 8px;
       margin-top: 5px;
@@ -43,20 +50,24 @@
       border: 1px solid #4f545c;
       border-radius: 3px;
     }
+
     button {
       background-color: #5865f2;
       cursor: pointer;
       font-weight: bold;
       transition: background-color 0.2s;
     }
+
     button:hover {
       background-color: #4752c4;
     }
+
     .status {
       text-align: center;
       font-style: italic;
       margin-top: 10px;
     }
+
     .footer {
       font-size: 12px;
       text-align: center;
@@ -65,10 +76,11 @@
     }
   </style>
 </head>
+
 <body>
   <img src="images/icon128.png" alt="Discord Summarizer Logo" class="logo">
   <h1>Discord Summarizer</h1>
-  
+
   <div class="section">
     <div class="section-title">Summary Mode</div>
     <select id="summary-mode">
@@ -77,7 +89,7 @@
       <option value="key_takeaways">Key Takeaways</option>
     </select>
   </div>
-  
+
   <div class="section">
     <div class="section-title">Summary Style</div>
     <select id="summary-style">
@@ -85,16 +97,31 @@
       <option value="paragraphs">Paragraphs</option>
     </select>
   </div>
-  
+
   <div class="section">
-    <button id="summarize-btn">Summarize Unread Messages</button>
+    <div class="section-title">Message Selection</div>
+    <select id="message-selection">
+      <option value="unread">Unread Messages</option>
+      <option value="recent">Recent Messages</option>
+    </select>
+
+    <div id="recent-options" style="display: none; margin-top: 10px;">
+      <label for="message-count">Number of messages:</label>
+      <input type="number" id="message-count" min="5" max="100" value="20"
+        style="width: 100%; padding: 8px; margin-top: 5px; background-color: #202225; color: white; border: 1px solid #4f545c; border-radius: 3px;">
+    </div>
+  </div>
+
+  <div class="section">
+    <button id="summarize-btn">Summarize Messages</button>
     <div id="status" class="status"></div>
   </div>
-  
+
   <div class="footer">
     Go to Discord and click the "Summarize" button in the chat interface
   </div>
 
   <script src="js/popup.js"></script>
 </body>
+
 </html>

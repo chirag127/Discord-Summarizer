@@ -1,7 +1,7 @@
 // Environment configuration
 const ENV = {
   development: {
-    API_URL: 'http://localhost:3000',
+    API_URL: 'http://192.168.31.232:3000', // Corrected port number
   },
   production: {
     API_URL: 'https://discord-summarizer-api.onrender.com', // Update with your actual production API URL

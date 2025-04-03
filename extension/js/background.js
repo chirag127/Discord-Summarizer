@@ -5,14 +5,23 @@ chrome.runtime.onInstalled.addListener(() => {
     console.log("Discord Summarizer extension installed");
 
     // Initialize default settings
-    chrome.storage.sync.get(["summaryMode", "summaryStyle"], (result) => {
-        if (!result.summaryMode) {
-            chrome.storage.sync.set({ summaryMode: "brief" });
+    chrome.storage.sync.get(
+        ["summaryMode", "summaryStyle", "messageSelection", "messageCount"],
+        (result) => {
+            if (!result.summaryMode) {
+                chrome.storage.sync.set({ summaryMode: "brief" });
+            }
+            if (!result.summaryStyle) {
+                chrome.storage.sync.set({ summaryStyle: "bullets" });
+            }
+            if (!result.messageSelection) {
+                chrome.storage.sync.set({ messageSelection: "unread" });
+            }
+            if (!result.messageCount) {
+                chrome.storage.sync.set({ messageCount: 20 });
+            }
         }
-        if (!result.summaryStyle) {
-            chrome.storage.sync.set({ summaryStyle: "bullets" });
-        }
-    });
+    );
 });
 
 // Listen for extension icon click (browser action)
