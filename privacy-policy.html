@@ -114,7 +114,8 @@
 <body>
     <div class="container">
         <header>
-            <img src="extension/images/icon128.png" alt="Discord Summarizer Logo" class="logo">
+            <img src="extension/images/icon128.png" alt="Discord Summarizer Logo" class="logo"
+                onerror="this.src='images/icon128.png'">
             <h1>Privacy Policy</h1>
             <p class="last-updated">Last Updated: July 2024</p>
             <a href="index.html" class="button">Back to Home</a>
@@ -157,7 +158,8 @@
                 <li><strong>User Preferences:</strong> Your selected summarization mode, style, and other preferences
                     stored locally in your browser.</li>
                 <li><strong>Discord User ID:</strong> A unique identifier used to associate your preferences with your
-                    Discord account.</li>
+                    Discord account. This helps us maintain consistent settings across sessions and enables
+                    channel-specific features.</li>
             </ul>
             <p>
                 <strong>Important:</strong> We only process message content when you explicitly request a summary by
@@ -167,10 +169,32 @@
         </section>
 
         <section>
+            <h2>Why We Use Discord User ID</h2>
+            <p>The Discord User ID is used for the following purposes:</p>
+            <ul>
+                <li><strong>Consistent Experience:</strong> To provide a consistent experience across browsing sessions
+                    by associating your preferences with a unique identifier.</li>
+                <li><strong>API Request Identification:</strong> To identify requests sent to our summarization API,
+                    ensuring proper handling of your summarization requests.</li>
+                <li><strong>Channel-Specific Features:</strong> To enable features that are specific to certain Discord
+                    channels or servers you use.</li>
+            </ul>
+            <p>
+                If we cannot access your Discord User ID (due to privacy settings or technical limitations), the
+                extension will generate a temporary ID that persists in your browser's local storage. This ensures the
+                extension works properly even without access to your actual Discord User ID.
+            </p>
+            <p>
+                The temporary ID is prefixed with "temp_" and is only stored locally on your device. It is not shared
+                with our servers or any third parties.
+            </p>
+        </section>
+
+        <section>
             <h2>How We Use Your Information</h2>
             <p>We use the collected information for the following purposes:</p>
             <ul>
-                <li>To generate summaries of Discord messages using Google Gemini-2.5-pro.</li>
+                <li>To generate summaries of Discord messages using Google Gemini-2.5-pro-exp-03-25.</li>
                 <li>To provide and maintain the functionality of the extension.</li>
                 <li>To improve the extension based on usage patterns and feedback.</li>
                 <li>To store your preferences for future use.</li>
@@ -196,9 +220,12 @@
         <section>
             <h2>Third-Party Services</h2>
             <p>
-                We use Google's Gemini API to process and summarize Discord messages. Your use of the Discord Summarizer
+                We use Google's Gemini API (specifically Gemini-2.5-pro-exp-03-25) to process and summarize Discord
+                messages. Your use of the Discord Summarizer
                 extension is also subject to
-                Google's Privacy Policy and Terms of Service. We encourage you to review these policies.
+                Google's <a href="https://policies.google.com/privacy" target="_blank">Privacy Policy</a> and <a
+                    href="https://policies.google.com/terms" target="_blank">Terms of Service</a>. We encourage you to
+                review these policies.
             </p>
             <p>
                 The extension interacts with Discord's web interface but does not share your data with Discord beyond
@@ -242,7 +269,7 @@
             <p>
                 &copy; 2023-2024 Discord Summarizer |
                 <a href="index.html">Home</a> |
-                <a href="https://github.com/yourusername/Discord-Summarizer">GitHub</a>
+                <a href="https://github.com/chirag127/Discord-Summarizer">GitHub</a>
             </p>
         </footer>
     </div>
