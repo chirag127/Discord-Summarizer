@@ -1,8 +1,4 @@
-const {
-    GoogleGenerativeAI,
-    HarmCategory,
-    HarmBlockThreshold,
-} = require("@google/generative-ai");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 // Initialize Google Generative AI
 const apiKey = process.env.GEMINI_API_KEY;
@@ -19,7 +15,7 @@ const generationConfig = {
     topP: 0.95,
     topK: 40,
     maxOutputTokens: 4096,
-    responseMimeType: "text/plain",
+    // Removed responseMimeType as it's not supported in the current API version
 };
 
 /**
