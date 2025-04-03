@@ -57,17 +57,50 @@ function showNotification(message) {
 // These history-related functions have been removed
 
 // Initialize the extension immediately and also when the page is fully loaded
-initDiscordSummarizer();
+try {
+    initDiscordSummarizer();
+    console.log("Discord Summarizer initialized on first load");
+} catch (error) {
+    console.error("Error initializing Discord Summarizer:", error);
+}
 
 // Also listen for DOMContentLoaded in case the script runs before the page is ready
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
-        initDiscordSummarizer();
+        try {
+            initDiscordSummarizer();
+            console.log("Discord Summarizer initialized on DOMContentLoaded");
+        } catch (error) {
+            console.error(
+                "Error initializing Discord Summarizer on DOMContentLoaded:",
+                error
+            );
+        }
     });
 }
 
+// Also listen for load event as a fallback
+window.addEventListener("load", () => {
+    try {
+        initDiscordSummarizer();
+        console.log("Discord Summarizer initialized on window load");
+    } catch (error) {
+        console.error(
+            "Error initializing Discord Summarizer on window load:",
+            error
+        );
+    }
+});
+
 // Listen for messages from the popup
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
+    // Handle ping request to check if content script is ready
+    if (request.action === "ping") {
+        sendResponse({ status: "ready" });
+        return false;
+    }
+
+    // Handle summarize request
     if (request.action === "summarizeFromPopup") {
         const options = {
             messageSelection: request.messageSelection,

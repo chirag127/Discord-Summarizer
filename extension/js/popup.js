@@ -67,13 +67,22 @@ document.addEventListener("DOMContentLoaded", () => {
             // Show loading status
             statusDiv.textContent = "Checking Discord tab...";
 
-            // Find Discord tab
+            // Find Discord tab - use a more general approach
             const tabs = await chrome.tabs.query({
-                url: "*://*.discord.com/*",
+                active: true,
+                currentWindow: true,
             });
 
+            // Check if we have an active tab
             if (tabs.length === 0) {
-                statusDiv.textContent = "Please open Discord in a tab first";
+                statusDiv.textContent = "No active tab found";
+                return;
+            }
+
+            // Check if the active tab is Discord
+            const activeTab = tabs[0];
+            if (!activeTab.url || !activeTab.url.includes("discord.com")) {
+                statusDiv.textContent = "Please open Discord in the active tab";
                 return;
             }
 
@@ -86,29 +95,63 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // Send message to content script
             statusDiv.textContent = "Summarizing...";
-            chrome.tabs.sendMessage(
-                tabs[0].id,
-                {
-                    action: "summarizeFromPopup",
-                    messageSelection,
-                    messageCount,
-                },
-                (response) => {
-                    if (chrome.runtime.lastError) {
-                        statusDiv.textContent =
-                            "Error: " + chrome.runtime.lastError.message;
-                        return;
-                    }
 
-                    if (response && response.success) {
-                        statusDiv.textContent = "Summary created!";
-                    } else if (response && response.error) {
-                        statusDiv.textContent = "Error: " + response.error;
-                    } else {
-                        statusDiv.textContent = "Unknown error occurred";
+            try {
+                // First, check if the content script is ready by sending a ping
+                chrome.tabs.sendMessage(
+                    activeTab.id,
+                    { action: "ping" },
+                    (_pingResponse) => {
+                        // If we get here without an error, the content script is ready
+                        if (chrome.runtime.lastError) {
+                            // Content script not ready or not injected
+                            statusDiv.textContent =
+                                "Error: Content script not ready. Please refresh the Discord tab.";
+                            console.error(
+                                "Content script error:",
+                                chrome.runtime.lastError
+                            );
+                            return;
+                        }
+
+                        // Now send the actual summarize message
+                        chrome.tabs.sendMessage(
+                            activeTab.id,
+                            {
+                                action: "summarizeFromPopup",
+                                messageSelection,
+                                messageCount,
+                            },
+                            (response) => {
+                                if (chrome.runtime.lastError) {
+                                    statusDiv.textContent =
+                                        "Error: " +
+                                        chrome.runtime.lastError.message;
+                                    console.error(
+                                        "Summarize error:",
+                                        chrome.runtime.lastError
+                                    );
+                                    return;
+                                }
+
+                                if (response && response.success) {
+                                    statusDiv.textContent = "Summary created!";
+                                } else if (response && response.error) {
+                                    statusDiv.textContent =
+                                        "Error: " + response.error;
+                                } else {
+                                    statusDiv.textContent =
+                                        "Unknown error occurred";
+                                }
+                            }
+                        );
                     }
-                }
-            );
+                );
+            } catch (sendError) {
+                statusDiv.textContent =
+                    "Error sending message: " + sendError.message;
+                console.error("Send message error:", sendError);
+            }
         } catch (error) {
             statusDiv.textContent = "Error: " + error.message;
         }
