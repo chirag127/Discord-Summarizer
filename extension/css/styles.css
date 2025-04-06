@@ -3,7 +3,6 @@
 /* TTS Styles */
 .tts-highlight {
     color: #5865f2; /* Bright blue text color */
-    text-decoration: underline; /* Add underline for additional emphasis */
     border-radius: 3px;
     padding: 0 2px;
 }
