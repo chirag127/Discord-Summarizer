@@ -13,11 +13,11 @@ class TTSController {
         this.words = [];
         this.highlightedElements = [];
         this.contentElement = null;
-        this.originalContent = '';
+        this.originalContent = "";
         this.settings = {
             rate: 1.0,
             pitch: 1.0,
-            voice: null
+            voice: null,
         };
         this.onFinishCallback = null;
     }
@@ -29,7 +29,7 @@ class TTSController {
     async init(settings = {}) {
         // Wait for voices to be loaded
         if (speechSynthesis.getVoices().length === 0) {
-            await new Promise(resolve => {
+            await new Promise((resolve) => {
                 speechSynthesis.onvoiceschanged = resolve;
             });
         }
@@ -37,13 +37,13 @@ class TTSController {
         // Apply settings
         this.settings = {
             ...this.settings,
-            ...settings
+            ...settings,
         };
 
         // Set voice if specified by name
         if (settings.voiceName) {
             const voices = this.synth.getVoices();
-            const voice = voices.find(v => v.name === settings.voiceName);
+            const voice = voices.find((v) => v.name === settings.voiceName);
             if (voice) {
                 this.settings.voice = voice;
             }
@@ -69,30 +69,33 @@ class TTSController {
     prepare(text, element, onFinish = null) {
         // Cancel any ongoing speech
         this.cancel();
-        
+
         this.contentElement = element;
         this.originalContent = element.innerHTML;
         this.onFinishCallback = onFinish;
-        
+
         // Clean text and split into words
-        const cleanText = text.replace(/\\n/g, ' ').trim();
-        this.words = cleanText.split(/\s+/);
-        
+        const cleanText = text.replace(/\\n/g, " ").trim();
+        this.words = cleanText.split(/\s+/).filter((w) => w.length > 0);
+
         // Create utterance
         this.utterance = new SpeechSynthesisUtterance(cleanText);
         this.utterance.rate = this.settings.rate;
         this.utterance.pitch = this.settings.pitch;
-        
+
         if (this.settings.voice) {
             this.utterance.voice = this.settings.voice;
         }
-        
+
         // Set up event handlers
         this.setupEventHandlers();
-        
+
+        // Initialize the highlighted elements array
+        this.highlightedElements = [];
+
         // Prepare the content for highlighting
         this.prepareContentForHighlighting();
-        
+
         return this;
     }
 
@@ -102,7 +105,7 @@ class TTSController {
     setupEventHandlers() {
         // Word boundary event for highlighting
         this.utterance.onboundary = (event) => {
-            if (event.name === 'word') {
+            if (event.name === "word") {
                 this.currentWord = this.getWordIndex(event.charIndex);
                 this.highlightCurrentWord();
             }
@@ -112,7 +115,7 @@ class TTSController {
         this.utterance.onend = () => {
             this.isPlaying = false;
             this.resetHighlighting();
-            
+
             if (this.onFinishCallback) {
                 this.onFinishCallback();
             }
@@ -120,7 +123,7 @@ class TTSController {
 
         // Handle speech errors
         this.utterance.onerror = (event) => {
-            console.error('Speech synthesis error:', event.error);
+            console.error("Speech synthesis error:", event.error);
             this.isPlaying = false;
             this.resetHighlighting();
         };
@@ -138,22 +141,101 @@ class TTSController {
 
     /**
      * Prepare content for word-by-word highlighting
+     * Preserves the original HTML structure
      */
     prepareContentForHighlighting() {
         if (!this.contentElement) return;
-        
-        // Create spans for each word
-        const wordElements = this.words.map((word, index) => 
-            `<span class="tts-word" data-word-index="${index}">${word}</span>`
-        );
-        
-        // Replace content with spans
-        this.contentElement.innerHTML = wordElements.join(' ');
-        
+
+        // Store original content for restoration later
+        this.originalContent = this.contentElement.innerHTML;
+
+        // Create a temporary div to work with the content
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = this.originalContent;
+
+        // Process all text nodes in the content
+        this.processTextNodes(tempDiv);
+
+        // Update the content with our processed version
+        this.contentElement.innerHTML = tempDiv.innerHTML;
+
         // Store references to all word elements
         this.highlightedElements = Array.from(
-            this.contentElement.querySelectorAll('.tts-word')
+            this.contentElement.querySelectorAll(".tts-word")
         );
+    }
+
+    /**
+     * Process all text nodes in an element to add highlighting spans
+     * @param {HTMLElement} element - The element to process
+     */
+    processTextNodes(element) {
+        // Skip script and style elements
+        if (element.tagName === "SCRIPT" || element.tagName === "STYLE") {
+            return;
+        }
+
+        const childNodes = Array.from(element.childNodes);
+        let wordIndex = this.highlightedElements.length;
+
+        for (const node of childNodes) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                // This is a text node, process it
+                if (node.textContent.trim()) {
+                    // Split the text into words
+                    const words = node.textContent
+                        .split(/\s+/)
+                        .filter((w) => w.length > 0);
+                    if (words.length > 0) {
+                        // Create a document fragment to hold the new content
+                        const fragment = document.createDocumentFragment();
+
+                        // Process each word
+                        let lastIndex = 0;
+                        let text = node.textContent;
+
+                        for (let i = 0; i < words.length; i++) {
+                            const word = words[i];
+                            const wordStart = text.indexOf(word, lastIndex);
+
+                            if (wordStart > lastIndex) {
+                                // Add any whitespace/punctuation before this word
+                                fragment.appendChild(
+                                    document.createTextNode(
+                                        text.substring(lastIndex, wordStart)
+                                    )
+                                );
+                            }
+
+                            // Create the word span
+                            const wordSpan = document.createElement("span");
+                            wordSpan.className = "tts-word";
+                            wordSpan.dataset.wordIndex =
+                                (wordIndex++).toString();
+                            wordSpan.textContent = word;
+                            fragment.appendChild(wordSpan);
+
+                            lastIndex = wordStart + word.length;
+                        }
+
+                        // Add any remaining text
+                        if (lastIndex < text.length) {
+                            fragment.appendChild(
+                                document.createTextNode(
+                                    text.substring(lastIndex)
+                                )
+                            );
+                        }
+
+                        // Replace the text node with our fragment
+                        node.parentNode.replaceChild(fragment, node);
+                    }
+                }
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                // This is an element node, process its children recursively
+                this.processTextNodes(node);
+            }
+        }
     }
 
     /**
@@ -161,17 +243,20 @@ class TTSController {
      */
     highlightCurrentWord() {
         // Remove previous highlighting
-        this.highlightedElements.forEach(el => {
-            el.classList.remove('tts-highlight');
+        this.highlightedElements.forEach((el) => {
+            el.classList.remove("tts-highlight");
         });
-        
+
         // Add highlighting to current word
         const currentElement = this.highlightedElements[this.currentWord];
         if (currentElement) {
-            currentElement.classList.add('tts-highlight');
-            
+            currentElement.classList.add("tts-highlight");
+
             // Scroll to the highlighted word if needed
-            currentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            currentElement.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+            });
         }
     }
 
@@ -180,20 +265,20 @@ class TTSController {
      */
     play() {
         if (this.isPlaying) return;
-        
+
         if (!this.utterance) {
-            console.error('No text prepared for speech');
+            console.error("No text prepared for speech");
             return;
         }
-        
+
         this.synth.speak(this.utterance);
         this.isPlaying = true;
-        
+
         // Highlight first word immediately
         setTimeout(() => {
             this.highlightCurrentWord();
         }, 100);
-        
+
         return this;
     }
 
@@ -202,10 +287,10 @@ class TTSController {
      */
     pause() {
         if (!this.isPlaying) return;
-        
+
         this.synth.pause();
         this.isPlaying = false;
-        
+
         return this;
     }
 
@@ -214,10 +299,10 @@ class TTSController {
      */
     resume() {
         if (this.isPlaying) return;
-        
+
         this.synth.resume();
         this.isPlaying = true;
-        
+
         return this;
     }
 
@@ -234,7 +319,7 @@ class TTSController {
                 this.play();
             }
         }
-        
+
         return this;
     }
 
@@ -245,7 +330,7 @@ class TTSController {
         this.synth.cancel();
         this.isPlaying = false;
         this.resetHighlighting();
-        
+
         return this;
     }
 
@@ -266,19 +351,19 @@ class TTSController {
     updateSettings(settings) {
         this.settings = {
             ...this.settings,
-            ...settings
+            ...settings,
         };
-        
+
         // If there's an active utterance, update its properties
         if (this.utterance) {
             this.utterance.rate = this.settings.rate;
             this.utterance.pitch = this.settings.pitch;
-            
+
             if (settings.voice) {
                 this.utterance.voice = settings.voice;
             }
         }
-        
+
         return this;
     }
 }
@@ -287,7 +372,7 @@ class TTSController {
 const ttsController = new TTSController();
 
 // Export the controller
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== "undefined" && module.exports) {
     module.exports = ttsController;
 } else {
     window.ttsController = ttsController;
