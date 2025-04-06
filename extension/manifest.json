@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Discord Summarizer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Summarize unread Discord messages using Google Gemini-2.0 Flash",
   "icons": {
     "16": "images/icon16.png",
