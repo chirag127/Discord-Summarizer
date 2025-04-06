@@ -1,5 +1,92 @@
 /* Discord Summarizer Styles */
 
+/* TTS Styles */
+.tts-highlight {
+    background-color: rgba(88, 101, 242, 0.3);
+    border-radius: 3px;
+    padding: 0 2px;
+    font-weight: bold;
+}
+
+.discord-summarizer-tts-btn {
+    background: none;
+    border: 1px solid #4f545c;
+    color: #b9bbbe;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 4px 8px;
+    margin-right: 8px;
+    border-radius: 3px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.discord-summarizer-tts-btn:hover {
+    background-color: #4f545c;
+    color: white;
+}
+
+.discord-summarizer-tts-btn.playing {
+    background-color: #5865f2;
+    color: white;
+    border-color: #5865f2;
+}
+
+.discord-summarizer-tts-btn i {
+    font-size: 14px;
+}
+
+.tts-settings-container {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #4f545c;
+}
+
+.tts-setting {
+    margin-bottom: 8px;
+}
+
+.tts-setting label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+}
+
+.tts-setting-value {
+    font-size: 12px;
+    color: #b9bbbe;
+    margin-left: 8px;
+}
+
+.tts-range {
+    width: 100%;
+    background-color: #202225;
+    height: 8px;
+    border-radius: 4px;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.tts-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background-color: #5865f2;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.tts-range::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background-color: #5865f2;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+
 /* Button container */
 .discord-summarizer-container {
     display: flex;
@@ -128,6 +215,13 @@
     align-items: center;
     padding: 12px 16px;
     background-color: #202225;
+}
+
+/* Buttons container */
+.discord-summarizer-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .discord-summarizer-header h3 {

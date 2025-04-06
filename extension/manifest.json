@@ -27,7 +27,8 @@
       ],
       "js": [
         "js/env.js",
-        "js/content.js"
+        "js/content.js",
+        "js/tts.js"
       ],
       "css": [
         "css/styles.css"
@@ -41,5 +42,15 @@
   ],
   "host_permissions": [
     "*://*.discord.com/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "js/tts.js"
+      ],
+      "matches": [
+        "*://*.discord.com/*"
+      ]
+    }
   ]
 }

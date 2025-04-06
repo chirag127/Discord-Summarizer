@@ -158,15 +158,41 @@
   <div id="popup-summary-container" class="section" style="display: none;">
     <div class="popup-summary-header">
       <div class="section-title">Summary</div>
-      <button id="popup-copy-btn" class="popup-copy-btn">Copy</button>
+      <div>
+        <button id="popup-tts-btn" class="popup-copy-btn" title="Text to Speech">🔊</button>
+        <button id="popup-copy-btn" class="popup-copy-btn" title="Copy to Clipboard">Copy</button>
+      </div>
     </div>
     <div id="popup-summary-content" class="popup-summary-content"></div>
+  </div>
+
+  <!-- Text-to-Speech Settings -->
+  <div class="section">
+    <div class="section-title">Text-to-Speech Settings</div>
+
+    <div class="tts-setting">
+      <label for="tts-voice">Voice:</label>
+      <select id="tts-voice">
+        <!-- Will be populated with available voices -->
+      </select>
+    </div>
+
+    <div class="tts-setting">
+      <label for="tts-rate">Speech Rate: <span id="tts-rate-value" class="tts-setting-value">1.0</span></label>
+      <input type="range" id="tts-rate" class="tts-range" min="0.5" max="16" step="0.1" value="1.0">
+    </div>
+
+    <div class="tts-setting">
+      <label for="tts-pitch">Pitch: <span id="tts-pitch-value" class="tts-setting-value">1.0</span></label>
+      <input type="range" id="tts-pitch" class="tts-range" min="0.5" max="2" step="0.1" value="1.0">
+    </div>
   </div>
 
   <div class="footer">
     Go to Discord and click the "Summarize" button in the chat interface
   </div>
 
+  <script src="js/tts.js"></script>
   <script src="js/popup.js"></script>
 </body>
 

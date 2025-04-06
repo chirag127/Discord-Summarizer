@@ -2,6 +2,49 @@
 
 // Function declarations - Define all functions at the top level for hoisting
 
+// Load TTS settings from storage
+function getTTSSettings() {
+    return new Promise((resolve) => {
+        chrome.storage.sync.get(
+            ["ttsRate", "ttsPitch", "ttsVoice"],
+            (result) => {
+                const settings = {
+                    rate: result.ttsRate ? parseFloat(result.ttsRate) : 1.0,
+                    pitch: result.ttsPitch ? parseFloat(result.ttsPitch) : 1.0,
+                    voiceName: result.ttsVoice || null,
+                };
+                resolve(settings);
+            }
+        );
+    });
+}
+
+// Dynamically load the TTS script
+function loadTTSScript() {
+    return new Promise((resolve, reject) => {
+        // Check if already loaded
+        if (window.ttsController) {
+            resolve();
+            return;
+        }
+
+        // Create script element
+        const script = document.createElement("script");
+        script.src = chrome.runtime.getURL("js/tts.js");
+        script.onload = () => {
+            console.log("TTS script loaded");
+            resolve();
+        };
+        script.onerror = (error) => {
+            console.error("Error loading TTS script:", error);
+            reject(error);
+        };
+
+        // Add to document
+        (document.head || document.documentElement).appendChild(script);
+    });
+}
+
 // Get Discord user ID from the page
 function getDiscordUserId() {
     // Try to find the user ID in localStorage
@@ -480,14 +523,39 @@ function displaySummary(summary, preferences, options = {}) {
     }
     header.appendChild(title);
 
+    // Create buttons container
+    const buttonsContainer = document.createElement("div");
+    buttonsContainer.className = "discord-summarizer-buttons";
+
+    // Create TTS button
+    const ttsBtn = document.createElement("button");
+    ttsBtn.className = "discord-summarizer-tts-btn";
+    ttsBtn.innerHTML = "🔊";
+    ttsBtn.title = "Text to Speech";
+    buttonsContainer.appendChild(ttsBtn);
+
+    // Create copy button
+    const copyBtn = document.createElement("button");
+    copyBtn.className = "discord-summarizer-copy-btn";
+    copyBtn.textContent = "Copy";
+    copyBtn.title = "Copy to Clipboard";
+    buttonsContainer.appendChild(copyBtn);
+
+    // Create close button
     const closeBtn = document.createElement("button");
     closeBtn.className = "discord-summarizer-close";
     closeBtn.innerHTML = "×";
+    closeBtn.title = "Close Summary";
     closeBtn.addEventListener("click", () => {
+        // Cancel any ongoing speech when closing
+        if (window.ttsController && window.ttsController.isPlaying) {
+            window.ttsController.cancel();
+        }
         summaryContainer.remove();
     });
-    header.appendChild(closeBtn);
+    buttonsContainer.appendChild(closeBtn);
 
+    header.appendChild(buttonsContainer);
     summaryContainer.appendChild(header);
 
     // Create content
@@ -498,43 +566,115 @@ function displaySummary(summary, preferences, options = {}) {
     content.setAttribute("role", "textbox"); // Semantic role for text content
     content.setAttribute("aria-readonly", "true"); // Indicate it's readonly
 
-    // Add a copy button
-    const copyBtn = document.createElement("button");
-    copyBtn.className = "discord-summarizer-copy-btn";
-    copyBtn.innerHTML = "Copy";
-    copyBtn.addEventListener("click", () => {
-        // Use modern clipboard API if available, fallback to execCommand
-        if (navigator.clipboard && window.isSecureContext) {
+    // Add TTS functionality
+    if (ttsBtn) {
+        ttsBtn.addEventListener("click", async () => {
+            // Check if Web Speech API is supported
+            if (!window.speechSynthesis) {
+                showNotification(
+                    "Text-to-speech is not supported in your browser"
+                );
+                return;
+            }
+
+            // Load TTS settings from storage
+            const ttsSettings = await getTTSSettings();
+
+            // Initialize TTS controller if not already done
+            if (!window.ttsController) {
+                // Dynamically load the TTS script if not already loaded
+                await loadTTSScript();
+            }
+
+            // Wait for ttsController to be available
+            if (!window.ttsController) {
+                showNotification("Error initializing text-to-speech");
+                return;
+            }
+
+            // Initialize with settings
+            await window.ttsController.init(ttsSettings);
+
+            // If already playing, stop it
+            if (window.ttsController.isPlaying) {
+                window.ttsController.cancel();
+                ttsBtn.textContent = "🔊";
+                ttsBtn.classList.remove("playing");
+                return;
+            }
+
             // Get the text content
             const textContent = content.innerText || content.textContent;
-            // Use the Clipboard API
-            navigator.clipboard.writeText(textContent);
-        } else {
-            // Fallback for older browsers
-            // Create a range and select the content
-            const range = document.createRange();
-            range.selectNodeContents(content);
-            const selection = window.getSelection();
-            selection.removeAllRanges();
-            selection.addRange(range);
 
-            // Copy to clipboard
-            document.execCommand("copy");
+            // Prepare and play the speech
+            window.ttsController
+                .prepare(textContent, content, () => {
+                    // Reset button when speech ends
+                    ttsBtn.textContent = "🔊";
+                    ttsBtn.classList.remove("playing");
+                })
+                .play();
 
-            // Deselect
-            selection.removeAllRanges();
-        }
+            // Update button state
+            ttsBtn.textContent = "⏹️";
+            ttsBtn.classList.add("playing");
+        });
+    }
 
-        // Show feedback
-        const originalText = copyBtn.innerHTML;
-        copyBtn.innerHTML = "Copied!";
-        setTimeout(() => {
-            copyBtn.innerHTML = originalText;
-        }, 2000);
-    });
+    // Add copy functionality
+    if (copyBtn) {
+        copyBtn.addEventListener("click", () => {
+            // Get the text content
+            const textContent = content.innerText || content.textContent;
 
-    // Add the copy button to the header
-    header.insertBefore(copyBtn, closeBtn);
+            // Use the Clipboard API if available
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard
+                    .writeText(textContent)
+                    .then(() => {
+                        // Show feedback
+                        const originalText = copyBtn.textContent;
+                        copyBtn.textContent = "Copied!";
+                        setTimeout(() => {
+                            copyBtn.textContent = originalText;
+                        }, 2000);
+                    })
+                    .catch((err) => {
+                        console.error("Could not copy text: ", err);
+                        showNotification("Error copying to clipboard");
+                    });
+            } else {
+                // Fallback for older browsers
+                try {
+                    // Create a range and select the content
+                    const range = document.createRange();
+                    range.selectNodeContents(content);
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+
+                    // Try to copy using document.execCommand as a fallback
+                    const successful = document.execCommand("copy");
+                    if (successful) {
+                        // Show feedback
+                        const originalText = copyBtn.textContent;
+                        copyBtn.textContent = "Copied!";
+                        setTimeout(() => {
+                            copyBtn.textContent = originalText;
+                        }, 2000);
+                    } else {
+                        showNotification("Failed to copy to clipboard");
+                    }
+
+                    // Deselect
+                    selection.removeAllRanges();
+                } catch (err) {
+                    console.error("Could not copy text: ", err);
+                    showNotification("Error copying to clipboard");
+                }
+            }
+        });
+    }
 
     summaryContainer.appendChild(content);
 

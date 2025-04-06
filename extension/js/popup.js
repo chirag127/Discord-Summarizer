@@ -1,11 +1,19 @@
 // Popup script for Discord Summarizer extension
 
+// TTS settings object
+let ttsSettings = {
+    rate: 1.0,
+    pitch: 1.0,
+    voiceName: null,
+};
+
 // Function to display summary in the popup
 function displaySummaryInPopup(summary, title) {
     // Get the summary container and content elements
     const summaryContainer = document.getElementById("popup-summary-container");
     const summaryContent = document.getElementById("popup-summary-content");
     const copyBtn = document.getElementById("popup-copy-btn");
+    const ttsBtn = document.getElementById("popup-tts-btn");
 
     // Update the section title if needed
     const sectionTitle = summaryContainer.querySelector(".section-title");
@@ -76,6 +84,45 @@ function displaySummaryInPopup(summary, title) {
 
     // Scroll to the summary container
     summaryContainer.scrollIntoView({ behavior: "smooth" });
+
+    // Set up the TTS button functionality
+    if (ttsBtn) {
+        ttsBtn.onclick = async () => {
+            // Check if Web Speech API is supported
+            if (!window.speechSynthesis) {
+                alert("Text-to-speech is not supported in your browser.");
+                return;
+            }
+
+            // Initialize TTS controller with current settings
+            await ttsController.init(ttsSettings);
+
+            // If already playing, stop it
+            if (ttsController.isPlaying) {
+                ttsController.cancel();
+                ttsBtn.textContent = "🔊";
+                ttsBtn.classList.remove("playing");
+                return;
+            }
+
+            // Get the text content
+            const textContent =
+                summaryContent.innerText || summaryContent.textContent;
+
+            // Prepare and play the speech
+            ttsController
+                .prepare(textContent, summaryContent, () => {
+                    // Reset button when speech ends
+                    ttsBtn.textContent = "🔊";
+                    ttsBtn.classList.remove("playing");
+                })
+                .play();
+
+            // Update button state
+            ttsBtn.textContent = "⏹️";
+            ttsBtn.classList.add("playing");
+        };
+    }
 }
 
 // Initialize popup
@@ -89,9 +136,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const summarizeBtn = document.getElementById("summarize-btn");
     const statusDiv = document.getElementById("status");
 
+    // TTS elements
+    const ttsVoiceSelect = document.getElementById("tts-voice");
+    const ttsRateInput = document.getElementById("tts-rate");
+    const ttsPitchInput = document.getElementById("tts-pitch");
+    const ttsRateValue = document.getElementById("tts-rate-value");
+    const ttsPitchValue = document.getElementById("tts-pitch-value");
+
     // Load saved preferences
     chrome.storage.sync.get(
-        ["summaryMode", "summaryStyle", "messageSelection", "messageCount"],
+        [
+            "summaryMode",
+            "summaryStyle",
+            "messageSelection",
+            "messageCount",
+            "ttsRate",
+            "ttsPitch",
+            "ttsVoice",
+        ],
         (result) => {
             if (result.summaryMode) {
                 summaryModeSelect.value = result.summaryMode;
@@ -108,6 +170,24 @@ document.addEventListener("DOMContentLoaded", () => {
             if (result.messageCount) {
                 messageCountInput.value = result.messageCount;
             }
+
+            // Load TTS settings
+            if (result.ttsRate) {
+                ttsRateInput.value = result.ttsRate;
+                ttsRateValue.textContent = result.ttsRate;
+                ttsSettings.rate = parseFloat(result.ttsRate);
+            }
+            if (result.ttsPitch) {
+                ttsPitchInput.value = result.ttsPitch;
+                ttsPitchValue.textContent = result.ttsPitch;
+                ttsSettings.pitch = parseFloat(result.ttsPitch);
+            }
+            if (result.ttsVoice) {
+                ttsSettings.voiceName = result.ttsVoice;
+            }
+
+            // Initialize TTS and populate voice dropdown
+            initTTS();
         }
     );
 
@@ -166,6 +246,86 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Clear any displayed summary when changing message count
         clearSummary();
+    });
+
+    // Initialize TTS and populate voice dropdown
+    async function initTTS() {
+        // Check if Web Speech API is supported
+        if (!window.speechSynthesis) {
+            console.error("Text-to-speech is not supported in this browser");
+            return;
+        }
+
+        // Initialize TTS controller
+        await ttsController.init(ttsSettings);
+
+        // Get available voices
+        const voices = ttsController.getVoices();
+
+        // Clear existing options
+        ttsVoiceSelect.innerHTML = "";
+
+        // Add default option
+        const defaultOption = document.createElement("option");
+        defaultOption.value = "";
+        defaultOption.textContent = "Default Voice";
+        ttsVoiceSelect.appendChild(defaultOption);
+
+        // Add available voices
+        voices.forEach((voice) => {
+            const option = document.createElement("option");
+            option.value = voice.name;
+            option.textContent = `${voice.name} (${voice.lang})`;
+
+            // Select saved voice if available
+            if (ttsSettings.voiceName === voice.name) {
+                option.selected = true;
+            }
+
+            ttsVoiceSelect.appendChild(option);
+        });
+    }
+
+    // Handle TTS settings changes
+    ttsRateInput.addEventListener("input", () => {
+        const rate = parseFloat(ttsRateInput.value);
+        ttsRateValue.textContent = rate.toFixed(1);
+        ttsSettings.rate = rate;
+        chrome.storage.sync.set({ ttsRate: rate.toString() });
+
+        // Update active TTS if playing
+        if (ttsController.isPlaying) {
+            ttsController.updateSettings({ rate });
+        }
+    });
+
+    ttsPitchInput.addEventListener("input", () => {
+        const pitch = parseFloat(ttsPitchInput.value);
+        ttsPitchValue.textContent = pitch.toFixed(1);
+        ttsSettings.pitch = pitch;
+        chrome.storage.sync.set({ ttsPitch: pitch.toString() });
+
+        // Update active TTS if playing
+        if (ttsController.isPlaying) {
+            ttsController.updateSettings({ pitch });
+        }
+    });
+
+    ttsVoiceSelect.addEventListener("change", () => {
+        const voiceName = ttsVoiceSelect.value;
+        ttsSettings.voiceName = voiceName || null;
+        chrome.storage.sync.set({ ttsVoice: voiceName });
+
+        // Update active TTS if playing
+        if (ttsController.isPlaying) {
+            // Get the selected voice object
+            const voices = ttsController.getVoices();
+            const voice = voices.find((v) => v.name === voiceName);
+
+            if (voice) {
+                ttsController.updateSettings({ voice });
+            }
+        }
     });
 
     // Handle summarize button click
