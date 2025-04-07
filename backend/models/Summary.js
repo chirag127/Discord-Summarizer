@@ -38,7 +38,7 @@ const summarySchema = new mongoose.Schema({
   mode: {
     type: String,
     enum: ['brief', 'detailed', 'key_takeaways'],
-    default: 'brief'
+    default: 'detailed'
   },
   style: {
     type: String,

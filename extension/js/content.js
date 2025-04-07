@@ -297,7 +297,7 @@ async function handleSummarizeClick() {
 
             // Set fixed preferences
             const preferences = {
-                summaryMode: "brief",
+                summaryMode: "detailed",
                 summaryStyle: "paragraphs",
             };
 
@@ -427,7 +427,7 @@ function getSummaryPreferences() {
             (response) => {
                 resolve(
                     response || {
-                        summaryMode: "brief",
+                        summaryMode: "detailed",
                         summaryStyle: "paragraphs",
                     }
                 );
