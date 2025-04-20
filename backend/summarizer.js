@@ -6,15 +6,18 @@ const genAI = new GoogleGenerativeAI(apiKey);
 
 // Get the model
 const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash",
+    // model: "gemini-2.0-flash",
+    model: "gemini-2.5-flash-preview-04-17",
+
 });
 
 // Generation config
 const generationConfig = {
     temperature: 0.7,
     topP: 0.95,
-    topK: 40,
-    maxOutputTokens: 4096,
+    topK: 64,
+    maxOutputTokens: 65536,
+
     // Removed responseMimeType as it's not supported in the current API version
 };
 
